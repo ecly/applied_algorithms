@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int* matrixFromFile(FILE *fp, int n){
-    int *mat = (int *)malloc(n * n * sizeof(int));
+    int *mat = (int *)malloc(n*n * sizeof(int));
 
     //ignore first comment line
     fscanf(fp, "%*[^\n]\n", NULL);
