@@ -83,15 +83,24 @@ int* mult(int* a, int* b, int n){
 
         // Fill sub matrices
         split(a, a11, 0, 0, newN);
+        //printf("a11: %d\n", *a11);
         split(a, a12, 0, newN, newN);
+        //printf("a12: %d\n", *a12);
         split(a, a21, newN, 0, newN);
+        //printf("a21: %d\n", *a21);
         split(a, a22, newN, newN, newN);
+        //printf("a22: %d\n", *a22);
         split(b, b11, 0, 0, newN);
+        //printf("b11: %d\n", *b11);
         split(b, b12, 0, newN, newN);
+        //printf("b12: %d\n", *b12);
         split(b, b21, newN, 0, newN);
+        //printf("b21: %d\n", *b21);
         split(b, b22, newN, newN, newN);
+        //printf("b22: %d\n", *b22);
 
         int *p1 = mult(add(a11, a22, newN), add(b11, b22, newN), newN);
+        printf("p22: %d\n", *p1);
         int *p2 = mult(add(a21, a22, newN), b11, newN);
         int *p3 = mult(a11, sub(b12, b22, newN), newN);
         int *p4 = mult(a22, sub(b21, b11, newN), newN);
