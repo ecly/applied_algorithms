@@ -1,4 +1,4 @@
-// More or less a C conversion of http://www.sanfoundry.com/java-program-strassen-algorithm/
+// Inspired by this Java implementation: http://www.sanfoundry.com/java-program-strassen-algorithm/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,102 +16,95 @@ int* matrixFromFile(FILE *fp, int n){
 }
 
 int split(int* from, int* to, int colOff, int rowOff, int size){
-    int offset = colOff*size*2+rowOff;
+    int offset = colOff*size*size+rowOff;
     for(int i = 0; i < size; i++){
         for(int j = 0; j < size; j++){
             int loc = i*size+j;
-            to[loc] = from[offset+loc];
-            //printf("offset: %d\n", offset);
-            //printf("loc: %d\n", loc);
-            //printf("to[loc]: %d\n\n", to[loc]);
+            //printf("loc = %d \n", loc);
+            //printf("asd = %d \n", offset+i*size*size+j);
+            //from[] to have n = size*size
+            //printf("fromVal = %d \n", from[offset+i*size*size+j]);
+            if (size == 2){
+                printf("from index: %d, to index: %d \n", offset+i*size*size+j, loc);
+            }
+            to[loc] = from[offset+i*size*size+j];
         }
     }
 }
 
 int join(int* from, int* to, int colOff, int rowOff, int size){
-    int offset = colOff*size*2+rowOff;
+    int offset = colOff*size*size+rowOff;
     for(int i = 0; i < size; i++){
         for(int j = 0; j < size; j++){
             int loc = i*size+j;
-            to[loc] = from[offset+loc];
+            if (size == 2){
+                //printf("from index: %d, to index: %d \n", loc, offset+i*size*size+j);
+            }
+
+            //assume to[] to have n = size*size
+            to[offset+i*size*size+j] = from[loc];
         }
     }
 }
 
 int* add(int* a, int* b, int n){
     int *mat = (int *)malloc(n*n * sizeof(int));
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j < n; j++){
-            int loc = i*n+j;
-            mat[loc] = a[loc] + b[loc];
-        }
+    for (int i = 0; i < n*n; i++){
+        mat[i] = a[i] + b[i];
     }
     return mat;
 }
 
 int* sub(int* a, int* b, int n){
     int *mat = (int *)malloc(n*n * sizeof(int));
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j < n; j++){
-            int loc = i*n+j;
-            mat[loc] = a[loc] - b[loc];
-        }
+    for (int i = 0; i < n*n; i++){
+        mat[i] = a[i] - b[i];
     }
     return mat;
 }
 
-int* mult(int* a, int* b, int n){
+int* mult(int* m1, int* m2, int n){
     int *mat = (int *)malloc(n*n * sizeof(int));
 
     // Base cases
     if(n == 1){
-        mat[0] = a[0] * b[0];
+        mat[0] = m1[0] * m2[0];
     } 
     else {
         // Create new sub matrices
         int newN = n/2;
         int matrixSize = newN*newN;;
-        int *a11 = (int *)malloc(matrixSize * sizeof(int));
-        int *a12 = (int *)malloc(matrixSize * sizeof(int));
-        int *a21 = (int *)malloc(matrixSize * sizeof(int));
-        int *a22 = (int *)malloc(matrixSize * sizeof(int));
+        int *a = (int *)malloc(matrixSize * sizeof(int));
+        int *b = (int *)malloc(matrixSize * sizeof(int));
+        int *c = (int *)malloc(matrixSize * sizeof(int));
+        int *d = (int *)malloc(matrixSize * sizeof(int));
 
-        int *b11 = (int *)malloc(matrixSize * sizeof(int));
-        int *b12 = (int *)malloc(matrixSize * sizeof(int));
-        int *b21 = (int *)malloc(matrixSize * sizeof(int));
-        int *b22 = (int *)malloc(matrixSize * sizeof(int));
+        int *e = (int *)malloc(matrixSize * sizeof(int));
+        int *f = (int *)malloc(matrixSize * sizeof(int));
+        int *g = (int *)malloc(matrixSize * sizeof(int));
+        int *h = (int *)malloc(matrixSize * sizeof(int));
 
-        // Fill sub matrices
-        split(a, a11, 0, 0, newN);
-        //printf("a11: %d\n", *a11);
-        split(a, a12, 0, newN, newN);
-        //printf("a12: %d\n", *a12);
-        split(a, a21, newN, 0, newN);
-        //printf("a21: %d\n", *a21);
-        split(a, a22, newN, newN, newN);
-        //printf("a22: %d\n", *a22);
-        split(b, b11, 0, 0, newN);
-        //printf("b11: %d\n", *b11);
-        split(b, b12, 0, newN, newN);
-        //printf("b12: %d\n", *b12);
-        split(b, b21, newN, 0, newN);
-        //printf("b21: %d\n", *b21);
-        split(b, b22, newN, newN, newN);
-        //printf("b22: %d\n", *b22);
+        split(m1, a, 0, 0, newN);
+        split(m1, b, 0, newN, newN);
+        split(m1, c, newN, 0, newN);
+        split(m1, d, newN, newN, newN);
+        split(m2, e, 0, 0, newN);
+        split(m2, f, 0, newN, newN);
+        split(m2, g, newN, 0, newN);
+        split(m2, h, newN, newN, newN);
 
-        int *p1 = mult(add(a11, a22, newN), add(b11, b22, newN), newN);
-        printf("p22: %d\n", *p1);
-        int *p2 = mult(add(a21, a22, newN), b11, newN);
-        int *p3 = mult(a11, sub(b12, b22, newN), newN);
-        int *p4 = mult(a22, sub(b21, b11, newN), newN);
-        int *p5 = mult(add(a11, a12, newN), b22, newN);
-        int *p6 = mult(sub(a21, a11, newN), add(b11, b12, newN), newN);
-        int *p7 = mult(sub(a12, a22, newN), add(b21, b22, newN), newN);
+        int *p1 = mult(a, sub(f, h, newN), newN);
+        int *p2 = mult(add(a, b, newN), h, newN);
+        int *p3 = mult(add(c, d, newN), e, newN);
+        int *p4 = mult(d, sub(g, e, newN), newN);
+        int *p5 = mult(add(a, d, newN), add(e, h, newN), newN);
+        int *p6 = mult(sub(b, d, newN), add(g, h, newN), newN);
+        int *p7 = mult(sub(a, c, newN), add(e, f, newN), newN);
 
-        int *c11 = add(sub(add(p1, p4, newN), p5, newN), p7, newN);
-        int *c12 = add(p3, p5, newN);
-        int *c21 = add(p2, p4, newN);
-        int *c22 = add(sub(add(p1, p3, newN), p2, newN), p6, newN);
+        int *c11 = add(sub(add(p5, p4, newN), p2, newN), p6, newN);
+        int *c12 = add(p1, p2, newN);
+        int *c21 = add(p3, p4, newN);
+        int *c22 = sub(sub(add(p5, p1, newN), p3, newN), p7, newN);
 
         join(c11, mat, 0, 0, newN);
         join(c12, mat, 0, newN, newN);
@@ -129,6 +122,6 @@ int main(int argc, char *argv[]){
     int* m2 = matrixFromFile(fp2, n);
     int* mat = mult(m1, m2, n);
     for(int f = 0; f < n*n; f++)
-        printf("%d ", *mat++);
+       printf("%d ", *mat++);
     return 0;
 }
