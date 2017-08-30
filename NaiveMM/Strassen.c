@@ -16,33 +16,19 @@ int* matrixFromFile(FILE *fp, int n){
 }
 
 int split(int* from, int* to, int colOff, int rowOff, int size){
-    int offset = colOff*size*size+rowOff;
+    int offset = colOff*size*2+rowOff;
     for(int i = 0; i < size; i++){
         for(int j = 0; j < size; j++){
-            int loc = i*size+j;
-            //printf("loc = %d \n", loc);
-            //printf("asd = %d \n", offset+i*size*size+j);
-            //from[] to have n = size*size
-            //printf("fromVal = %d \n", from[offset+i*size*size+j]);
-            if (size == 2){
-                printf("from index: %d, to index: %d \n", offset+i*size*size+j, loc);
-            }
-            to[loc] = from[offset+i*size*size+j];
+            to[i*size+j] = from[offset+i*2*size+j];
         }
     }
 }
 
 int join(int* from, int* to, int colOff, int rowOff, int size){
-    int offset = colOff*size*size+rowOff;
+    int offset = colOff*size*2+rowOff;
     for(int i = 0; i < size; i++){
         for(int j = 0; j < size; j++){
-            int loc = i*size+j;
-            if (size == 2){
-                //printf("from index: %d, to index: %d \n", loc, offset+i*size*size+j);
-            }
-
-            //assume to[] to have n = size*size
-            to[offset+i*size*size+j] = from[loc];
+            to[offset+i*size*2+j] = from[i*size+j];
         }
     }
 }
