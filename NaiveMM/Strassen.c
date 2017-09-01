@@ -1,4 +1,6 @@
 // Inspired by this Java implementation: http://www.sanfoundry.com/java-program-strassen-algorithm/
+// Hint of using NaiveMM for smaller from Riko Jacob
+// Idea for NaiveMM optimization with 1 val of first matrix at a time from Michael Vesterli
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -49,16 +51,30 @@ int* sub(int* a, int* b, int n){
     return mat;
 }
 
+int* multNaive(int* a, int* b, int n){
+    int *mat = (int *)malloc(n*n * sizeof(int));
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            int x = a[i*n+j];
+            for(int k = 0; k < n; k++){
+                mat[k+i*n] += x * b[j*n+k];
+            }
+        }
+    }
+
+    return mat;
+}
+
 int* mult(int* m1, int* m2, int n){
     int *mat = (int *)malloc(n*n * sizeof(int));
 
     // Base cases
-    if(n == 1){
-        mat[0] = m1[0] * m2[0];
+    if(n <= 32){
+        return multNaive(m1, m2, n);
     } 
     else {
-        // Create new sub matrices
         int newN = n/2;
+        // Create new sub matrices
         int matrixSize = newN*newN;;
         int *a = (int *)malloc(matrixSize * sizeof(int));
         int *b = (int *)malloc(matrixSize * sizeof(int));
