@@ -75,25 +75,14 @@ int* mult(int* m1, int* m2, int n){
     else {
         int newN = n/2;
         // Create new sub matrices
-        int matrixSize = newN*newN;;
-        int *a = (int *)malloc(matrixSize * sizeof(int));
-        int *b = (int *)malloc(matrixSize * sizeof(int));
-        int *c = (int *)malloc(matrixSize * sizeof(int));
-        int *d = (int *)malloc(matrixSize * sizeof(int));
-
-        int *e = (int *)malloc(matrixSize * sizeof(int));
-        int *f = (int *)malloc(matrixSize * sizeof(int));
-        int *g = (int *)malloc(matrixSize * sizeof(int));
-        int *h = (int *)malloc(matrixSize * sizeof(int));
-
-        split(m1, a, 0, 0, newN);
-        split(m1, b, 0, newN, newN);
-        split(m1, c, newN, 0, newN);
-        split(m1, d, newN, newN, newN);
-        split(m2, e, 0, 0, newN);
-        split(m2, f, 0, newN, newN);
-        split(m2, g, newN, 0, newN);
-        split(m2, h, newN, newN, newN);
+        int* a = m1; 
+        int* b = &m1[newN]; 
+        int* c = &m1[newN*n]; 
+        int* d = &m1[newN*n+newN]; 
+        int* e = m2; 
+        int* f = &m2[newN]; 
+        int* g = &m2[newN*n]; 
+        int* h = &m2[newN*n+newN]; 
 
         int *p1 = mult(a, sub(f, h, newN), newN);
         int *p2 = mult(add(a, b, newN), h, newN);
