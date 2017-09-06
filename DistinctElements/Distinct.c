@@ -52,13 +52,13 @@ int f_atoi(const char *p) {
 
 int main(){
     char buf[30];
-    fgets(buf, sizeof(buf), stdin);
+    fgets_unlocked(buf, sizeof(buf), stdin);
     int threshold = f_atoi(buf);
     int m = 1024;
     int V = m;
     int* M = (int*)calloc(m, sizeof(int));
     int input;
-    while(fgets(buf, sizeof(buf), stdin) != NULL){
+    while(fgets_unlocked(buf, sizeof(buf), stdin) != NULL){
         input = f_atoi(buf);
         int j = f(input);
         int val = M[j];
