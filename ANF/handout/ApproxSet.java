@@ -33,4 +33,16 @@ public class ApproxSet {
 		return (int)estimate;
 	}
 
+    public byte[] getSet(){
+        return M;
+    }
+
+    public void addSet(ApproxSet a) {
+        byte[] Mx = a.getSet();
+
+        for(int i = 0; i < m; i++){
+            if (M[i] < Mx[i])
+                M[i] = Mx[i];
+        }
+	}
 }
