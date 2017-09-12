@@ -46,9 +46,11 @@ public class ANF {
 
     private static int ANF(){
         int d = 0;
-        int medianLocation = graph.size() * graph.size() / 2;
-        while(true){
-            int reach = 0;
+        long medianLocation = (Long.valueOf(graph.size()) * Long.valueOf((graph.size()))) / 2L;
+        
+        long reach = 0L;
+        while(reach < medianLocation){
+            reach = 0L;
             Map<Integer,ApproxSet> m = new HashMap<Integer,ApproxSet>();
 
             for(Map.Entry<Integer, Set<Integer>> entry : graph.entrySet()){
@@ -61,7 +63,6 @@ public class ANF {
                 m.put(entry.getKey(), mv);
             }
             d++;
-            if (reach >= medianLocation) break;
             counters = m;
         }
         return d;
