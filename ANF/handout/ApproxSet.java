@@ -6,7 +6,7 @@
 
 public class ApproxSet {
 
-	private static int logm = 10;
+	private static int logm = 5;
 	private static int m = 1<<logm;
 	private byte[] M = new byte[m];
 
