@@ -5,6 +5,7 @@ import (
 	"container/heap"
 	"fmt"
 	"math/rand"
+	"runtime"
 	"sort"
 	"time"
 )
@@ -61,6 +62,10 @@ func main() {
 
 	after := makeTimestamp()
 	fmt.Printf("Elapsed time for priority queue: %dms \n", after-before)
+
+	// Ensure no garbage collection during next experiment
+	// by doing it beforehand
+	runtime.GC()
 
 	before = makeTimestamp()
 	sort.Ints(A)
