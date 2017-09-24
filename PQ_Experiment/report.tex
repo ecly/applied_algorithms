@@ -23,7 +23,8 @@
 \begin{figure}[!ht]
     \centering
     \noindent\includegraphics[scale=0.6]{graph.png}
-    \caption{Graph plotting the running times of PQ-sort and Library-sort.\label{fig:graph}}
+    \caption{Graph plotting the running times of PQ-sort and Library-sort.}
+    \label{fig:graph}
 \end{figure}
 
 Based on our results shown in Figure~\ref{fig:graph}, we can with a certainty of 95\% say that for permuting a list \texttt{A} to give a result \texttt{B} such that \texttt{B} is sorted\footnote{Sorted in this case meaning B[i] $\le$ B[i+1] for any i.}, the priority queue implementation has at most a 0.69071\% chance of being faster or equally fast as the library function.\footnote{What a bold statement. Is this even remotely close to the intended experiment?}. This is given the following:
