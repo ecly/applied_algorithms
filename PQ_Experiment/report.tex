@@ -1,0 +1,23 @@
+\documentclass[a5paper]{article}
+\usepackage[parfill]{parskip}% don't indent new sections
+\usepackage{amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper]{geometry}
+\pagestyle{empty}
+
+
+\title{Priority Queue Sort Experiment}
+\author{Emil Lynegaard}
+
+\begin{document}
+  \maketitle
+  \section{Experiment}
+  For this experiment, the programming language Go will be used. The experiment will set out to compare sorting of a list of numbers respectively with a priority queue and with a call to a library sort function. Since Go does not ship with a priority queue directly, an implementation thereof provided from their documentation of their heap package\footnote{https://golang.org/pkg/container/heap/} will be used. The sort function that will be used is Go's \texttt{sort.Ints}\footnote{https://golang.org/pkg/sort/\#Ints}.
+
+\textbf{Measurement:} For the comparison the experiment will be ran 100 times for both the prioriy queue and for the library sort function. The input will be of size \texttt{10.000.000} and the two experiments will be ran independently on the same machine with minimal process interference.
+
+\section{Results}
+\section{Bonus question}
+The priority queue will never be faster at sorting an array than a sensible library function. This is due to the overhead of maintaining the advantageous data structure behind the scenes. If one however was fine with keeping the data in the priority queue, and had to repeatedly insert new items into the data structure, a priority queue would vastly outperform a basic array. For the priority queue we would get insertions of $O(\log n)$ in contrast to $O(n)$ with a naive array implementation.
+\end{document}
+

@@ -36,40 +36,61 @@ func makeTimestamp() int64 {
 	return time.Now().UnixNano() / int64(time.Millisecond)
 }
 
+func createRandomInput(size int) []int {
+	// Create array A[a] and fill with random numbers
+	var A []int
+	A = make([]int, size)
+	for i := 0; i < size; i++ {
+		A[i] = rand.Intn(size)
+	}
+	return A
+}
+
+func sortWithBinaryHeap(input []int) {
+	// Initialize the heap
+	h := &IntHeap{}
+	heap.Init(h)
+
+	for i := 0; i < len(input); i++ {
+		heap.Push(h, input[i])
+	}
+	for i := 0; i < len(input); i++ {
+		input[i] = heap.Pop(h).(int)
+	}
+}
+
 // This example inserts several ints into an IntHeap, checks the minimum,
 // and removes them in order of priority.
 func main() {
 	// Seed our RNG
 	rand.Seed(time.Now().UTC().UnixNano())
-
-	// Create array A[a] and fill with random numbers
 	const a = 10000000
-	var A []int
-	A = make([]int, a)
-	for i := 0; i < a; i++ {
-		A[i] = rand.Intn(a)
+	const repetitions = 100
+
+	/*
+		fmt.Println("Sorting with PQ, format: <#iteration,time/ms>")
+		for i := 1; i <= repetitions; i++ {
+			// Ensure no garbage collection during next experiment
+			// by doing it beforehand
+			runtime.GC()
+			A := createRandomInput(a)
+
+			before := makeTimestamp()
+			sortWithBinaryHeap(A)
+			after := makeTimestamp()
+			fmt.Println("%d,%d", i, after-before)
+		}
+	*/
+	fmt.Println("Sorting with sort.Ints, format: <#iteration,time/ms>")
+	for i := 1; i <= repetitions; i++ {
+		// Ensure no garbage collection during next experiment
+		// by doing it beforehand
+		runtime.GC()
+		A := createRandomInput(a)
+
+		before := makeTimestamp()
+		sort.Ints(A)
+		after := makeTimestamp()
+		fmt.Println("%d,%d", i, after-before)
 	}
-
-	// Initialize the heap
-	h := &IntHeap{}
-	heap.Init(h)
-
-	before := makeTimestamp()
-	for i := 0; i < a; i++ {
-		heap.Push(h, A[i])
-	}
-	fmt.Printf("Minimum item in PQ: %d\n", heap.Pop(h))
-
-	after := makeTimestamp()
-	fmt.Printf("Elapsed time for priority queue: %dms \n", after-before)
-
-	// Ensure no garbage collection during next experiment
-	// by doing it beforehand
-	runtime.GC()
-
-	before = makeTimestamp()
-	sort.Ints(A)
-	after = makeTimestamp()
-	fmt.Printf("Minimum item in sorted array: %d\n", A[0])
-	fmt.Printf("Elapsed time for library sort: %dms \n", after-before)
 }
