@@ -64,24 +64,23 @@ func sortWithBinaryHeap(input []int) {
 func main() {
 	// Seed our RNG
 	rand.Seed(time.Now().UTC().UnixNano())
-	const a = 10000000
+	const a = 5000000
 	const repetitions = 100
 
-	/*
-		fmt.Println("Sorting with PQ, format: <#iteration,time/ms>")
-		for i := 1; i <= repetitions; i++ {
-			// Ensure no garbage collection during next experiment
-			// by doing it beforehand
-			runtime.GC()
-			A := createRandomInput(a)
+	fmt.Println("Sorting with PQ: <#iteration,time/ms>")
+	for i := 1; i <= repetitions; i++ {
+		// Ensure no garbage collection during next experiment
+		// by doing it beforehand
+		runtime.GC()
+		A := createRandomInput(a)
 
-			before := makeTimestamp()
-			sortWithBinaryHeap(A)
-			after := makeTimestamp()
-			fmt.Println("%d,%d", i, after-before)
-		}
-	*/
-	fmt.Println("Sorting with sort.Ints, format: <#iteration,time/ms>")
+		before := makeTimestamp()
+		sortWithBinaryHeap(A)
+		after := makeTimestamp()
+		fmt.Printf("%d,%d\n", i, after-before)
+	}
+
+	fmt.Println("Sorting with sort.Ints: <#iteration,time/ms>")
 	for i := 1; i <= repetitions; i++ {
 		// Ensure no garbage collection during next experiment
 		// by doing it beforehand
@@ -91,6 +90,6 @@ func main() {
 		before := makeTimestamp()
 		sort.Ints(A)
 		after := makeTimestamp()
-		fmt.Println("%d,%d", i, after-before)
+		fmt.Printf("%d,%d\n", i, after-before)
 	}
 }
