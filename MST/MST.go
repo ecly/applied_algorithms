@@ -18,10 +18,11 @@ type Edge struct {
 	Weight int32
 }
 
-func MST(graph []int32) {
-	fmt.Println("Solved")
+func MST(graph []Edge) []Edge {
+	return []Edge{Edge{1, 2, 3}}
 }
 
+// generate a fully connected graph
 func generateComplete() []Edge {
 	// at least this big for starters
 	var graph []Edge
@@ -34,19 +35,45 @@ func generateComplete() []Edge {
 }
 
 func generateGrid(numX int32, numY int32) []Edge {
-	complete := []Edge{Edge{1, 2, 3}}
-	return complete
+	// at least this big for starters
+	size := numX * numY
+	graph := make([]Edge, 0, size)
+
+	// row connections
+	for j := int32(0); j < numY; j++ {
+		start := j * numX
+		end := start + numX - 1
+		for i := start; i < end; i++ {
+			//fmt.Printf("ROW: from: %d, to: %d \n", i, i+1)
+			graph = append(graph, Edge{i, i + 1, getEdgeWeight(i, i+1)})
+		}
+	}
+
+	//column connections
+	for i := int32(0); i < numX; i++ {
+		for j := int32(0); j < numY-1; j++ {
+			from := i + numX*j
+			to := from + numX
+			//fmt.Printf("COL: from: %d, to: %d \n", from, to)
+			graph = append(graph, Edge{from, to, getEdgeWeight(from, to)})
+		}
+	}
+	return graph
 }
 
+/* Read a graph from file with each lines being of format v1<tab>v2
+** indicating an edge between the two vertices.
+** Vertex number should always be less than 'VertexAmount'
+** and there should be at most 'numOfEdges' edges
+ */
 func readGraph(filename string, numOfEdges int32) []Edge {
 	complete := []Edge{Edge{1, 2, 3}}
 	return complete
 }
 
-//var int32 EDGE_MOD := 100000
-
 func getEdgeWeight(v1 int32, v2 int32) int32 {
-	return xorshift32(VertexSeed[v1]^VertexSeed[v2]) % int32(100000)
+	//fmt.Printf("v1: %d, v2: %d\n", v1, v2)
+	return xorshift32(VertexSeed[v1]^VertexSeed[v2]) % 100000
 }
 
 func xorshift32(seed int32) int32 {
@@ -82,26 +109,19 @@ func mstToInt(mst []Edge) int32 {
 }
 
 func main() {
-	fmt.Println("nice", int32(0x5f37a86))
 	args := os.Args[1:]
 	var graph []Edge
+
 	switch len(args) {
 	case 2:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
+
 		vertexAmount, _ := strconv.Atoi(args[1])
 		VertexAmount = int32(vertexAmount)
-		fmt.Printf("Seed %d, Amount %d \n", Seed, VertexAmount)
 
 		generateSeeds()
-		for i := 0; i < len(VertexSeed); i++ {
-			fmt.Println(VertexSeed[i])
-		}
 		graph = generateComplete()
-		for i := 0; i < len(graph); i++ {
-			x := graph[i]
-			fmt.Printf("X:%d, Y:%d, Weight: %d\n", x.X, x.Y, x.Weight)
-		}
 	case 3:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
@@ -114,6 +134,9 @@ func main() {
 		VertexAmount = X * Y
 
 		generateSeeds()
+		for i := 0; i < len(VertexSeed); i++ {
+			fmt.Printf("Seed: %d, Value: %d\n", i, VertexSeed[i])
+		}
 		graph = generateGrid(X, Y)
 	case 4:
 		seed, _ := strconv.Atoi(args[0])
@@ -123,6 +146,13 @@ func main() {
 		numOfEdges, _ := strconv.Atoi(args[3])
 		VertexAmount = int32(vertexAmount)
 		graph = readGraph(filename, int32(numOfEdges))
+	}
+
+	for i := 0; i < len(graph); i++ {
+		x := graph[i].X
+		y := graph[i].X
+		w := graph[i].Weight
+		fmt.Printf("X: %d, Y: %d, W: %d\n", x, y, w)
 	}
 
 	//mst := MST(graph)
