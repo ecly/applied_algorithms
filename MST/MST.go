@@ -1,43 +1,84 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Globals
 var Seed int32
 var VertexAmount int32
-var VertexSeed []int32
-var Graph []Edge
+var Vertices []Vertex
+
+type Vertex struct {
+	Seed     int32
+	Edges    []Edge
+	Visisted bool
+}
+
+func (v Vertex) AddEdge(edge Edge) {
+	v.Edges = append(v.Edges, edge)
+}
 
 type Edge struct {
-	X      int32
-	Y      int32
+	To     int32
 	Weight int32
 }
 
-func MST(graph []Edge) []Edge {
-	return []Edge{Edge{1, 2, 3}}
+//https://golang.org/pkg/container/heap/#example__intHeap
+type Fringe []Edge
+
+func (f Fringe) Len() int           { return len(f) }
+func (f Fringe) Less(i, j int) bool { return f[i].Weight < f[j].Weight }
+func (f Fringe) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
+
+func (f *Fringe) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*f = append(*f, x.(Edge))
+}
+
+func (f *Fringe) Pop() interface{} {
+	old := *f
+	n := len(old)
+	x := old[n-1]
+	*f = old[0 : n-1]
+	return x
+}
+
+func MST() []Edge {
+	mst := make([]Edge, 0, VertexAmount-1) // minimum size
+	var fringe Fringe
+	Vertices[0].Visisted = true
+	for len(fringe) > 0 {
+		for _, edge := range Vertices[0].Edges {
+			if !Vertices[edge.To].Visisted {
+				//TODO only if no other cheaper edge in fringe is pointing to same
+				fringe.Push(edge)
+			}
+		}
+	}
+	return mst
 }
 
 // generate a fully connected graph
-func generateComplete() []Edge {
+func generateComplete() {
 	// at least this big for starters
-	var graph []Edge
 	for i := int32(0); i < VertexAmount; i++ {
 		for j := i + 1; j < VertexAmount; j++ {
-			graph = append(graph, Edge{i, j, getEdgeWeight(i, j)})
+			weight := getEdgeWeight(i, j)
+			Vertices[i].AddEdge(Edge{j, weight})
+			Vertices[j].AddEdge(Edge{i, weight})
 		}
 	}
-	return graph
 }
 
-func generateGrid(numX int32, numY int32) []Edge {
+func generateGrid(numX int32, numY int32) {
 	// at least this big for starters
-	size := numX * numY
-	graph := make([]Edge, 0, size)
 
 	// row connections
 	for j := int32(0); j < numY; j++ {
@@ -45,7 +86,10 @@ func generateGrid(numX int32, numY int32) []Edge {
 		end := start + numX - 1
 		for i := start; i < end; i++ {
 			//fmt.Printf("ROW: from: %d, to: %d \n", i, i+1)
-			graph = append(graph, Edge{i, i + 1, getEdgeWeight(i, i+1)})
+			to := i + 1
+			weight := getEdgeWeight(i, to)
+			Vertices[i].AddEdge(Edge{to, weight})
+			Vertices[to].AddEdge(Edge{i, weight})
 		}
 	}
 
@@ -55,10 +99,11 @@ func generateGrid(numX int32, numY int32) []Edge {
 			from := i + numX*j
 			to := from + numX
 			//fmt.Printf("COL: from: %d, to: %d \n", from, to)
-			graph = append(graph, Edge{from, to, getEdgeWeight(from, to)})
+			weight := getEdgeWeight(from, to)
+			Vertices[from].AddEdge(Edge{to, weight})
+			Vertices[to].AddEdge(Edge{from, weight})
 		}
 	}
-	return graph
 }
 
 /* Read a graph from file with each lines being of format v1<tab>v2
@@ -67,13 +112,37 @@ func generateGrid(numX int32, numY int32) []Edge {
 ** and there should be at most 'numOfEdges' edges
  */
 func readGraph(filename string, numOfEdges int32) []Edge {
-	complete := []Edge{Edge{1, 2, 3}}
-	return complete
+	// open a file
+	graph := make([]Edge, 0, numOfEdges)
+	if file, err := os.Open(filename); err == nil {
+		// make sure it gets closed
+		defer file.Close()
+
+		// create a new scanner and read the file line by line
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			words := strings.Fields(scanner.Text())
+			numY, _ := strconv.Atoi(words[0])
+			numX, _ := strconv.Atoi(words[1])
+			x := int32(numX)
+			y := int32(numY)
+			weight := getEdgeWeight(x, y)
+			Vertices[x].AddEdge(Edge{y, weight})
+			Vertices[y].AddEdge(Edge{x, weight})
+		}
+		// check for errors
+		if err = scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Fatal(err)
+	}
+	return graph
 }
 
 func getEdgeWeight(v1 int32, v2 int32) int32 {
 	//fmt.Printf("v1: %d, v2: %d\n", v1, v2)
-	return xorshift32(VertexSeed[v1]^VertexSeed[v2]) % 100000
+	return xorshift32(Vertices[v1].Seed^Vertices[v2].Seed) % 100000
 }
 
 func xorshift32(seed int32) int32 {
@@ -85,10 +154,10 @@ func xorshift32(seed int32) int32 {
 }
 
 func generateSeeds() {
-	VertexSeed = make([]int32, VertexAmount, VertexAmount)
-	VertexSeed[0] = xorshift32(Seed)
+	Vertices = make([]Vertex, VertexAmount, VertexAmount)
+	Vertices[0] = Vertex{xorshift32(Seed), nil, false}
 	for i := int32(1); i < VertexAmount; i++ {
-		VertexSeed[i] = xorshift32(VertexSeed[i-1] ^ Seed)
+		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, false}
 	}
 }
 
@@ -110,8 +179,6 @@ func mstToInt(mst []Edge) int32 {
 
 func main() {
 	args := os.Args[1:]
-	var graph []Edge
-
 	switch len(args) {
 	case 2:
 		seed, _ := strconv.Atoi(args[0])
@@ -121,7 +188,7 @@ func main() {
 		VertexAmount = int32(vertexAmount)
 
 		generateSeeds()
-		graph = generateComplete()
+		generateComplete()
 	case 3:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
@@ -134,10 +201,7 @@ func main() {
 		VertexAmount = X * Y
 
 		generateSeeds()
-		for i := 0; i < len(VertexSeed); i++ {
-			fmt.Printf("Seed: %d, Value: %d\n", i, VertexSeed[i])
-		}
-		graph = generateGrid(X, Y)
+		generateGrid(X, Y)
 	case 4:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
@@ -145,16 +209,15 @@ func main() {
 		vertexAmount, _ := strconv.Atoi(args[2])
 		numOfEdges, _ := strconv.Atoi(args[3])
 		VertexAmount = int32(vertexAmount)
-		graph = readGraph(filename, int32(numOfEdges))
+		generateSeeds()
+		readGraph(filename, int32(numOfEdges))
 	}
 
-	for i := 0; i < len(graph); i++ {
-		x := graph[i].X
-		y := graph[i].X
-		w := graph[i].Weight
-		fmt.Printf("X: %d, Y: %d, W: %d\n", x, y, w)
+	for i := 0; i < len(Vertices); i++ {
+		seed := Vertices[i].Seed
+		fmt.Printf("%d's seed: %d\n", i, seed)
 	}
 
-	//mst := MST(graph)
-	fmt.Println(mstToInt(graph))
+	mst := MST()
+	fmt.Println(mstToInt(mst))
 }
