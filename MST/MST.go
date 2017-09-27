@@ -78,27 +78,22 @@ func generateComplete() {
 }
 
 func generateGrid(numX int32, numY int32) {
-	// at least this big for starters
-
-	// row connections
+	// row edges
 	for j := int32(0); j < numY; j++ {
 		start := j * numX
 		end := start + numX - 1
 		for i := start; i < end; i++ {
-			//fmt.Printf("ROW: from: %d, to: %d \n", i, i+1)
 			to := i + 1
 			weight := getEdgeWeight(i, to)
 			Vertices[i].AddEdge(Edge{to, weight})
 			Vertices[to].AddEdge(Edge{i, weight})
 		}
 	}
-
-	//column connections
+	//column edges
 	for i := int32(0); i < numX; i++ {
 		for j := int32(0); j < numY-1; j++ {
 			from := i + numX*j
 			to := from + numX
-			//fmt.Printf("COL: from: %d, to: %d \n", from, to)
 			weight := getEdgeWeight(from, to)
 			Vertices[from].AddEdge(Edge{to, weight})
 			Vertices[to].AddEdge(Edge{from, weight})
@@ -112,8 +107,7 @@ func generateGrid(numX int32, numY int32) {
 ** and there should be at most 'numOfEdges' edges
  */
 func readGraph(filename string, numOfEdges int32) []Edge {
-	// open a file
-	graph := make([]Edge, 0, numOfEdges)
+	graph := make([]Edge, 0, numOfEdges) // known size
 	if file, err := os.Open(filename); err == nil {
 		// make sure it gets closed
 		defer file.Close()
@@ -130,7 +124,6 @@ func readGraph(filename string, numOfEdges int32) []Edge {
 			Vertices[x].AddEdge(Edge{y, weight})
 			Vertices[y].AddEdge(Edge{x, weight})
 		}
-		// check for errors
 		if err = scanner.Err(); err != nil {
 			log.Fatal(err)
 		}
@@ -141,7 +134,6 @@ func readGraph(filename string, numOfEdges int32) []Edge {
 }
 
 func getEdgeWeight(v1 int32, v2 int32) int32 {
-	//fmt.Printf("v1: %d, v2: %d\n", v1, v2)
 	return xorshift32(Vertices[v1].Seed^Vertices[v2].Seed) % 100000
 }
 
@@ -183,23 +175,18 @@ func main() {
 	case 2:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
-
 		vertexAmount, _ := strconv.Atoi(args[1])
 		VertexAmount = int32(vertexAmount)
-
 		generateSeeds()
 		generateComplete()
 	case 3:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
-
 		numX, _ := strconv.Atoi(args[1])
 		numY, _ := strconv.Atoi(args[2])
-
 		X := int32(numX)
 		Y := int32(numY)
 		VertexAmount = X * Y
-
 		generateSeeds()
 		generateGrid(X, Y)
 	case 4:
@@ -211,11 +198,6 @@ func main() {
 		VertexAmount = int32(vertexAmount)
 		generateSeeds()
 		readGraph(filename, int32(numOfEdges))
-	}
-
-	for i := 0; i < len(Vertices); i++ {
-		seed := Vertices[i].Seed
-		fmt.Printf("%d's seed: %d\n", i, seed)
 	}
 
 	mst := MST()
