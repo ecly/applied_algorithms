@@ -16,13 +16,13 @@ var VertexAmount int32
 var Vertices []Vertex
 
 type Vertex struct {
-	Seed       int32
-	Edges      []Edge
-	Visisted   bool
-	InFringeBy *Edge
+	Seed     int32
+	Edges    []Edge
+	Visisted bool
+	FringeBy *Item
 }
 
-func (v Vertex) AddEdge(edge Edge) {
+func (v *Vertex) AddEdge(edge Edge) {
 	v.Edges = append(v.Edges, edge)
 }
 
@@ -31,25 +31,44 @@ type Edge struct {
 	Weight int32
 }
 
+type Item struct {
+	Index int
+	Edge  *Edge
+}
+
 //https://golang.org/pkg/container/heap/#example__intHeap
-type Fringe []Edge
+type Fringe []*Item
 
 func (f Fringe) Len() int           { return len(f) }
-func (f Fringe) Less(i, j int) bool { return f[i].Weight < f[j].Weight }
-func (f Fringe) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
+func (f Fringe) Less(i, j int) bool { return f[i].Edge.Weight < f[j].Edge.Weight }
+
+func (f Fringe) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
+	f[i].Index = i
+	f[j].Index = j
+}
 
 func (f *Fringe) Push(x interface{}) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	*f = append(*f, x.(Edge))
+	n := len(*f)
+	item := x.(*Item)
+	item.Index = n
+	*f = append(*f, item)
+	heap.Fix(f, item.Index)
+}
+
+// update modifies the priority and value of an Item in the queue.
+func (f *Fringe) update(item *Item, weight int32) {
+	item.Edge.Weight = weight
+	heap.Fix(f, item.Index)
 }
 
 func (f *Fringe) Pop() interface{} {
 	old := *f
 	n := len(old)
-	x := old[n-1]
+	item := old[n-1]
+	item.Index = -1 //for safety
 	*f = old[0 : n-1]
-	return x
+	return item
 }
 
 func MST() []Edge {
@@ -58,25 +77,35 @@ func MST() []Edge {
 	heap.Init(fringe)
 	Vertices[0].Visisted = true
 	// initial fringe
-	for _, edge := range Vertices[0].Edges {
-		heap.Push(fringe, edge)
-		Vertices[edge.To].InFringeBy = &edge
+	for i, edge := range Vertices[0].Edges {
+		fmt.Printf("Added E to: %d with Weight: %d to Fringe\n", edge.To, edge.Weight)
+		item := &Item{i, &edge}
+		heap.Push(fringe, item)
+		heap.Fix(fringe, item.Index)
+		Vertices[edge.To].FringeBy = item
+	}
+	for fringe.Len() > 0 {
+		item := heap.Pop(fringe).(*Item)
+		//fmt.Println("Pop1", heap.Pop(fringe).(Item).Edge.Weight)
+		fmt.Println("Pop1", item.Edge.Weight)
 	}
 
-	for len(*fringe) > 0 {
-		mstEdge := heap.Pop(fringe).(Edge)
-		mst = append(mst, mstEdge)
+	for fringe.Len() > 0 {
+		mstEdge := heap.Pop(fringe).(*Item).Edge
+		//fmt.Println("Popped edge off with weight", mstEdge.Weight)
+		Vertices[mstEdge.To].Visisted = true
+		mst = append(mst, *mstEdge)
 		for _, edge := range Vertices[mstEdge.To].Edges {
 			if !Vertices[edge.To].Visisted {
-				if Vertices[edge.To].InFringeBy == nil {
-					heap.Push(fringe, edge)
-					Vertices[edge.To].InFringeBy = &edge
+				if Vertices[edge.To].FringeBy == nil {
+					item := &Item{Edge: &edge}
+					heap.Push(fringe, item)
+					Vertices[edge.To].FringeBy = item
 				} else {
-					currentEdge := Vertices[edge.To].InFringeBy
-					if currentEdge.Weight < edge.Weight {
-						//TODO
-						//Update weight
-						//And fix position in MinHeap
+					currentItem := Vertices[edge.To].FringeBy
+					fmt.Println("hmm")
+					if currentItem.Edge.Weight > edge.Weight {
+						fringe.update(currentItem, edge.Weight)
 					}
 				}
 			}
@@ -219,7 +248,20 @@ func main() {
 		generateSeeds()
 		readGraph(filename, int32(numOfEdges))
 	}
+	/*for i, v := range Vertices {
+		fmt.Printf("Vertex: %d, Seed:%d\n", i, v.Seed)
+		for _, e := range v.Edges {
+			fmt.Printf("To: %d, Weight: %d\n", e.To, e.Weight)
+		}
+		fmt.Println()
+	}*/
 
 	mst := MST()
+	//mst := []Edge{Edge{0, -60078}, Edge{0, -78884}}
+	fmt.Println("MST:")
+	for _, e := range mst {
+		fmt.Printf("To: %d, Weight: %d\n", e.To, e.Weight)
+	}
+
 	fmt.Println(mstToInt(mst))
 }
