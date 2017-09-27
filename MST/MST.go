@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"log"
 	"os"
@@ -15,9 +16,10 @@ var VertexAmount int32
 var Vertices []Vertex
 
 type Vertex struct {
-	Seed     int32
-	Edges    []Edge
-	Visisted bool
+	Seed       int32
+	Edges      []Edge
+	Visisted   bool
+	InFringeBy *Edge
 }
 
 func (v Vertex) AddEdge(edge Edge) {
@@ -52,13 +54,31 @@ func (f *Fringe) Pop() interface{} {
 
 func MST() []Edge {
 	mst := make([]Edge, 0, VertexAmount-1) // minimum size
-	var fringe Fringe
+	fringe := &Fringe{}
+	heap.Init(fringe)
 	Vertices[0].Visisted = true
-	for len(fringe) > 0 {
-		for _, edge := range Vertices[0].Edges {
+	// initial fringe
+	for _, edge := range Vertices[0].Edges {
+		heap.Push(fringe, edge)
+		Vertices[edge.To].InFringeBy = &edge
+	}
+
+	for len(*fringe) > 0 {
+		mstEdge := heap.Pop(fringe).(Edge)
+		mst = append(mst, mstEdge)
+		for _, edge := range Vertices[mstEdge.To].Edges {
 			if !Vertices[edge.To].Visisted {
-				//TODO only if no other cheaper edge in fringe is pointing to same
-				fringe.Push(edge)
+				if Vertices[edge.To].InFringeBy == nil {
+					heap.Push(fringe, edge)
+					Vertices[edge.To].InFringeBy = &edge
+				} else {
+					currentEdge := Vertices[edge.To].InFringeBy
+					if currentEdge.Weight < edge.Weight {
+						//TODO
+						//Update weight
+						//And fix position in MinHeap
+					}
+				}
 			}
 		}
 	}
@@ -147,9 +167,9 @@ func xorshift32(seed int32) int32 {
 
 func generateSeeds() {
 	Vertices = make([]Vertex, VertexAmount, VertexAmount)
-	Vertices[0] = Vertex{xorshift32(Seed), nil, false}
+	Vertices[0] = Vertex{xorshift32(Seed), nil, false, nil}
 	for i := int32(1); i < VertexAmount; i++ {
-		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, false}
+		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, false, nil}
 	}
 }
 
