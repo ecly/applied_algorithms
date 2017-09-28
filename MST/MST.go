@@ -77,7 +77,7 @@ func (f *Fringe) Pop() interface{} {
 	old := *f
 	n := len(old)
 	item := old[n-1]
-	//item.Index = -1 //for safety
+	item.Index = -1 //for safety
 	*f = old[0 : n-1]
 	return item
 }
@@ -110,9 +110,13 @@ func MST() []*Edge {
 				} else {
 					if edge.Weight < edge.To.FringeBy.Edge.Weight {
 						fringe.update(edge.To.FringeBy, edge)
-						//fmt.Printf("Len: %d, Index: %d\n", f.Len(), item.Index)
 						if fringe[0].Edge.Weight > edge.Weight {
-							fmt.Printf("WTF")
+							fringe[0].Edge = edge
+							fmt.Println("???")
+							fmt.Println("Root weight: ", fringe[0].Edge.Weight)
+							fmt.Println("Root+1 weight: ", fringe[1].Edge.Weight)
+							fmt.Println("Root+2 weight: ", fringe[2].Edge.Weight)
+							fmt.Println("Current Edge weight: ", edge.Weight)
 						}
 					}
 				}
