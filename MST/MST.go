@@ -114,14 +114,14 @@ func MST() []*Edge {
 				} else {
 					if edge.Weight < edge.To.FringeBy.Edge.Weight {
 						fringe.update(edge.To.FringeBy, edge)
-						if fringe[0].Edge.Weight > edge.Weight {
+						/*if fringe[0].Edge.Weight > edge.Weight {
 							//fringe[0].Edge = edge
 							fmt.Println("???")
 							fmt.Println("Root weight: ", fringe[0].Edge.Weight)
 							fmt.Println("Root+1 weight: ", fringe[1].Edge.Weight)
 							fmt.Println("Root+2 weight: ", fringe[2].Edge.Weight)
 							fmt.Println("Current Edge weight: ", edge.Weight)
-						}
+						}*/
 					}
 				}
 			}
@@ -249,6 +249,7 @@ func mstToInt(mst []*Edge) int32 {
 // 4 arguments: <seed> <filename> <vertex amount> <edge amount>
 // 	Generate a graph based on file -> see 'readGraph()'
 func main() {
+	//debug.SetGCPercent(-1)
 	args := os.Args[1:]
 	switch len(args) {
 	case 2:
@@ -279,11 +280,11 @@ func main() {
 		readGraph(filename, int32(numOfEdges))
 	}
 	mst := MST()
-	fmt.Println("MST:")
+	//fmt.Println("MST:")
 	/*for _, e := range mst {
 		fmt.Printf("Weight: %d\n", e.Weight)
 	}*/
 
-	fmt.Println("Len:", len(mst))
+	//fmt.Println("Len:", len(mst))
 	fmt.Println(mstToInt(mst))
 }
