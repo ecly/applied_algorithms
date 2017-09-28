@@ -77,14 +77,14 @@ func (f *Fringe) Pop() interface{} {
 	old := *f
 	n := len(old)
 	item := old[n-1]
-	item.Index = -1 //for safety
+	//item.Index = -1 //for safety
 	*f = old[0 : n-1]
 	return item
 }
 
 // Calculate a minimum spanning tree from a slice of Edges
-func MST() []Edge {
-	mst := make([]Edge, 0, VertexAmount-1) // minimum size
+func MST() []*Edge {
+	mst := make([]*Edge, 0, VertexAmount-1) // minimum size
 	Vertices[0].Visisted = true
 	fringe := make(Fringe, len(Vertices[0].Edges))
 
@@ -94,22 +94,26 @@ func MST() []Edge {
 		fringe[i] = item
 		e.To.FringeBy = item
 	}
-	//initial the fringe as a heap
+
 	heap.Init(&fringe)
 
 	for fringe.Len() > 0 {
 		mstEdge := heap.Pop(&fringe).(*Item).Edge
 		mstEdge.To.Visisted = true
-		mst = append(mst, *mstEdge)
+		mst = append(mst, mstEdge)
 		for _, edge := range mstEdge.To.Edges {
 			if !edge.To.Visisted {
 				if edge.To.FringeBy == nil {
 					item := &Item{Edge: edge}
-					heap.Push(&fringe, item)
 					edge.To.FringeBy = item
+					heap.Push(&fringe, item)
 				} else {
-					if edge.To.FringeBy.Edge.Weight > edge.Weight {
+					if edge.Weight < edge.To.FringeBy.Edge.Weight {
 						fringe.update(edge.To.FringeBy, edge)
+						//fmt.Printf("Len: %d, Index: %d\n", f.Len(), item.Index)
+						if fringe[0].Edge.Weight > edge.Weight {
+							fmt.Printf("WTF")
+						}
 					}
 				}
 			}
@@ -188,15 +192,17 @@ func readGraph(filename string, numOfEdges int32) []Edge {
 
 // Calculate the weight of a vertex based on its from, to vertices.
 func getEdgeWeight(v1 int32, v2 int32) int32 {
+	//weight :=
+	//fmt.Printf("Edge from %d, to %d, weight: %d\n", v1, v2, weight)
 	return xorshift32(Vertices[v1].Seed^Vertices[v2].Seed) % 100000
 }
 
 // Provided xorshift32 implementation.
 func xorshift32(seed int32) int32 {
 	ret := seed
-	ret ^= ret << uint32(13)
-	ret ^= ret >> uint32(17)
-	ret ^= ret << uint32(5)
+	ret ^= ret << 13
+	ret ^= ret >> 17
+	ret ^= ret << 5
 	return ret
 }
 
@@ -211,7 +217,7 @@ func generateSeeds() {
 
 // Provided hash function.
 func hashRand(inIndex int32) int32 {
-	const b = int32(0x5f375a86) //bunch of random bits
+	const b int32 = 0x5f375a86 //bunch of random bits
 	for i := 0; i < 8; i++ {
 		inIndex = (inIndex + 1) * ((inIndex >> 1) ^ b)
 	}
@@ -219,8 +225,8 @@ func hashRand(inIndex int32) int32 {
 }
 
 // Calculate the sum of all h(w) for all edges in MST.
-func mstToInt(mst []Edge) int32 {
-	total := int32(0)
+func mstToInt(mst []*Edge) int32 {
+	var total int32 = 0
 	for i := 0; i < len(mst); i++ {
 		total += hashRand(mst[i].Weight)
 	}
@@ -265,11 +271,11 @@ func main() {
 		readGraph(filename, int32(numOfEdges))
 	}
 	mst := MST()
-	//mst := []Edge{Edge{0, -60078}, Edge{0, -78884}}
-	/*fmt.Println("MST:")
-	for _, e := range mst {
+	fmt.Println("MST:")
+	/*for _, e := range mst {
 		fmt.Printf("Weight: %d\n", e.Weight)
 	}*/
 
+	fmt.Println("Len:", len(mst))
 	fmt.Println(mstToInt(mst))
 }
