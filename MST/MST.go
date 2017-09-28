@@ -26,10 +26,13 @@ type Vertex struct {
 	FringeBy *Item
 }
 
-func (v *Vertex) AddEdge(edge Edge) {
-	v.Edges = append(v.Edges, &edge)
+// Adds the pointer to Edge 'edge' to the Slice of Edges for Vertex 'v'.
+func (v *Vertex) AddEdge(edge *Edge) {
+	v.Edges = append(v.Edges, edge)
 }
 
+// An Edge has a pointer to the Vertex it points at
+// and a int32 Weight.
 type Edge struct {
 	To     *Vertex
 	Weight int32
@@ -51,6 +54,7 @@ func (f Fringe) Len() int { return len(f) }
 // We want items pointing to edges with lowest possible weight.
 func (f Fringe) Less(i, j int) bool { return f[i].Edge.Weight < f[j].Edge.Weight }
 
+// Swap f[i] and f[j] and update the Item's Index.
 func (f Fringe) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 	f[i].Index = i
@@ -111,7 +115,7 @@ func MST() []*Edge {
 					if edge.Weight < edge.To.FringeBy.Edge.Weight {
 						fringe.update(edge.To.FringeBy, edge)
 						if fringe[0].Edge.Weight > edge.Weight {
-							fringe[0].Edge = edge
+							//fringe[0].Edge = edge
 							fmt.Println("???")
 							fmt.Println("Root weight: ", fringe[0].Edge.Weight)
 							fmt.Println("Root+1 weight: ", fringe[1].Edge.Weight)
@@ -132,8 +136,8 @@ func generateComplete() {
 	for i := int32(0); i < VertexAmount; i++ {
 		for j := i + 1; j < VertexAmount; j++ {
 			weight := getEdgeWeight(i, j)
-			Vertices[i].AddEdge(Edge{&Vertices[j], weight})
-			Vertices[j].AddEdge(Edge{&Vertices[i], weight})
+			Vertices[i].AddEdge(&Edge{&Vertices[j], weight})
+			Vertices[j].AddEdge(&Edge{&Vertices[i], weight})
 		}
 	}
 }
@@ -147,8 +151,8 @@ func generateGrid(numX int32, numY int32) {
 		for i := start; i < end; i++ {
 			to := i + 1
 			weight := getEdgeWeight(i, to)
-			Vertices[i].AddEdge(Edge{&Vertices[to], weight})
-			Vertices[to].AddEdge(Edge{&Vertices[i], weight})
+			Vertices[i].AddEdge(&Edge{&Vertices[to], weight})
+			Vertices[to].AddEdge(&Edge{&Vertices[i], weight})
 		}
 	}
 	//column edges
@@ -157,8 +161,8 @@ func generateGrid(numX int32, numY int32) {
 			from := i + numX*j
 			to := from + numX
 			weight := getEdgeWeight(from, to)
-			Vertices[from].AddEdge(Edge{&Vertices[to], weight})
-			Vertices[to].AddEdge(Edge{&Vertices[from], weight})
+			Vertices[from].AddEdge(&Edge{&Vertices[to], weight})
+			Vertices[to].AddEdge(&Edge{&Vertices[from], weight})
 		}
 	}
 }
@@ -182,8 +186,8 @@ func readGraph(filename string, numOfEdges int32) []Edge {
 			x := int32(numX)
 			y := int32(numY)
 			weight := getEdgeWeight(x, y)
-			Vertices[x].AddEdge(Edge{&Vertices[y], weight})
-			Vertices[y].AddEdge(Edge{&Vertices[x], weight})
+			Vertices[x].AddEdge(&Edge{&Vertices[y], weight})
+			Vertices[y].AddEdge(&Edge{&Vertices[x], weight})
 		}
 		if err = scanner.Err(); err != nil {
 			log.Fatal(err)
