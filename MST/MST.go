@@ -19,12 +19,12 @@ var Vertices []Vertex
 // Seed: the seed of the vertex.
 // Edges: pointers to edges connected to the vertex.
 // Visited: whether is has already been visited by MST().
-// FringeBy: a pointer to potential item in fringe pointing to this vertex.
+// FringeBy: -1 if no index in fringe pointing to, otherwise the index
 type Vertex struct {
 	Seed     int32
 	Edges    []*Edge
 	Visited  bool
-	FringeBy *Item
+	FringeBy int
 }
 
 // Adds the pointer to Edge 'edge' to the Slice of Edges for Vertex 'v'.
@@ -59,7 +59,9 @@ func (f Fringe) Less(i, j int) bool { return f[i].Edge.Weight < f[j].Edge.Weight
 func (f Fringe) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 	f[i].Index = i
+	f[i].Edge.To.FringeBy = i
 	f[j].Index = j
+	f[j].Edge.To.FringeBy = j
 }
 
 // Add an item to the fringe.
@@ -68,13 +70,6 @@ func (f *Fringe) Push(x interface{}) {
 	item := x.(*Item)
 	item.Index = n
 	*f = append(*f, item)
-}
-
-// Update modifies the Edge pointer to the given edge pointer
-// and adjusts its position in the heap based on the new edge's weight
-func (f *Fringe) update(item *Item, edge *Edge) {
-	item.Edge = edge
-	heap.Fix(f, item.Index)
 }
 
 // Removes lowest weight item from fringe and returns it.
@@ -97,42 +92,24 @@ func MST() []*Edge {
 	for i, e := range Vertices[0].Edges {
 		item := &Item{Edge: e}
 		fringe[i] = item
-		e.To.FringeBy = item
+		e.To.FringeBy = i
 	}
-
 	heap.Init(&fringe)
 
 	for fringe.Len() > 0 {
 		mstEdge := heap.Pop(&fringe).(*Item).Edge
-		// this check won't be needed if we fix the heap.Update()
-		if mstEdge.To.Visited {
-			continue
-		}
 		mstEdge.To.Visited = true
 		mst = append(mst, mstEdge)
 		for _, edge := range mstEdge.To.Edges {
 			if !edge.To.Visited {
-				if edge.To.FringeBy == nil {
+				if edge.To.FringeBy == -1 {
 					item := &Item{Edge: edge}
-					edge.To.FringeBy = item
 					heap.Push(&fringe, item)
+					edge.To.FringeBy = item.Index
 				} else {
-					if edge.Weight < edge.To.FringeBy.Edge.Weight {
-						// fmt.Println("Updating")
-						fringe.update(edge.To.FringeBy, edge)
-						// this is terrible, we always push
-						//item := &Item{Edge: edge}
-						//edge.To.FringeBy = item
-						//heap.Push(&fringe, item)
-						if edge.Weight < fringe[0].Edge.Weight {
-							fmt.Println("lol")
-							fringe.update(edge.To.FringeBy, edge)
-							// this is terrible, we always push
-
-							if edge.Weight < fringe[0].Edge.Weight {
-								fmt.Println("seriously lol")
-							}
-						}
+					if edge.Weight < fringe[edge.To.FringeBy].Edge.Weight {
+						fringe[edge.To.FringeBy].Edge = edge
+						heap.Fix(&fringe, edge.To.FringeBy)
 					}
 				}
 			}
@@ -228,9 +205,9 @@ func xorshift32(seed int32) int32 {
 // Fills 'Vertices' with Vertices with seeds generated from xorshift32.
 func generateSeeds() {
 	Vertices = make([]Vertex, VertexAmount, VertexAmount)
-	Vertices[0] = Vertex{xorshift32(Seed), nil, false, nil}
+	Vertices[0] = Vertex{xorshift32(Seed), nil, false, -1}
 	for i := int32(1); i < VertexAmount; i++ {
-		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, false, nil}
+		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, false, -1}
 	}
 }
 
@@ -289,38 +266,8 @@ func main() {
 		VertexAmount = int32(vertexAmount)
 		generateSeeds()
 		readGraph(filename, int32(numOfEdges))
-	default:
-		// handcoded
-		VertexAmount = 6
-		generateSeeds()
-		Vertices[0].AddEdge(&Edge{&Vertices[1], 3})
-		Vertices[1].AddEdge(&Edge{&Vertices[0], 3})
-		Vertices[0].AddEdge(&Edge{&Vertices[2], 7})
-		Vertices[2].AddEdge(&Edge{&Vertices[0], 7})
-
-		Vertices[1].AddEdge(&Edge{&Vertices[4], 9})
-		Vertices[4].AddEdge(&Edge{&Vertices[1], 9})
-		Vertices[1].AddEdge(&Edge{&Vertices[2], 10})
-		Vertices[2].AddEdge(&Edge{&Vertices[1], 10})
-		Vertices[1].AddEdge(&Edge{&Vertices[3], 4})
-		Vertices[3].AddEdge(&Edge{&Vertices[1], 4})
-
-		Vertices[2].AddEdge(&Edge{&Vertices[3], 5})
-		Vertices[3].AddEdge(&Edge{&Vertices[2], 5})
-
-		Vertices[3].AddEdge(&Edge{&Vertices[5], 8})
-		Vertices[5].AddEdge(&Edge{&Vertices[3], 8})
-
-		Vertices[4].AddEdge(&Edge{&Vertices[5], 1})
-		Vertices[5].AddEdge(&Edge{&Vertices[4], 1})
 	}
 
 	mst := MST()
-	//fmt.Println("MST:")
-	/*for _, e := range mst {
-		fmt.Printf("Weight: %d\n", e.Weight)
-	}*/
-
-	//fmt.Println("Len:", len(mst))
 	fmt.Println(mstToInt(mst))
 }
