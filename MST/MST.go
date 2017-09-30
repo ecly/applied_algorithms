@@ -22,7 +22,7 @@ var Vertices []Vertex
 type Vertex struct {
 	Seed     int32
 	Edges    []*Edge
-	Visisted bool
+	Visited  bool
 	FringeBy *Item
 }
 
@@ -89,7 +89,7 @@ func (f *Fringe) Pop() interface{} {
 // Calculate a minimum spanning tree from a slice of Edges
 func MST() []*Edge {
 	mst := make([]*Edge, 0, VertexAmount-1) // minimum size
-	Vertices[0].Visisted = true
+	Vertices[0].Visited = true
 	fringe := make(Fringe, len(Vertices[0].Edges))
 
 	// initial fringe is first vertex' edges
@@ -103,25 +103,22 @@ func MST() []*Edge {
 
 	for fringe.Len() > 0 {
 		mstEdge := heap.Pop(&fringe).(*Item).Edge
-		mstEdge.To.Visisted = true
+		if mstEdge.To.Visited {
+			continue
+		}
+		mstEdge.To.Visited = true
 		mst = append(mst, mstEdge)
 		for _, edge := range mstEdge.To.Edges {
-			if !edge.To.Visisted {
+			if !edge.To.Visited {
 				if edge.To.FringeBy == nil {
 					item := &Item{Edge: edge}
 					edge.To.FringeBy = item
 					heap.Push(&fringe, item)
 				} else {
 					if edge.Weight < edge.To.FringeBy.Edge.Weight {
-						fringe.update(edge.To.FringeBy, edge)
-						/*if fringe[0].Edge.Weight > edge.Weight {
-							//fringe[0].Edge = edge
-							fmt.Println("???")
-							fmt.Println("Root weight: ", fringe[0].Edge.Weight)
-							fmt.Println("Root+1 weight: ", fringe[1].Edge.Weight)
-							fmt.Println("Root+2 weight: ", fringe[2].Edge.Weight)
-							fmt.Println("Current Edge weight: ", edge.Weight)
-						}*/
+						item := &Item{Edge: edge}
+						edge.To.FringeBy = item
+						heap.Push(&fringe, item)
 					}
 				}
 			}
@@ -278,12 +275,37 @@ func main() {
 		VertexAmount = int32(vertexAmount)
 		generateSeeds()
 		readGraph(filename, int32(numOfEdges))
+	default:
+		// handcoded
+		VertexAmount = 6
+		generateSeeds()
+		Vertices[0].AddEdge(&Edge{&Vertices[1], 3})
+		Vertices[1].AddEdge(&Edge{&Vertices[0], 3})
+		Vertices[0].AddEdge(&Edge{&Vertices[2], 7})
+		Vertices[2].AddEdge(&Edge{&Vertices[0], 7})
+
+		Vertices[1].AddEdge(&Edge{&Vertices[4], 9})
+		Vertices[4].AddEdge(&Edge{&Vertices[1], 9})
+		Vertices[1].AddEdge(&Edge{&Vertices[2], 10})
+		Vertices[2].AddEdge(&Edge{&Vertices[1], 10})
+		Vertices[1].AddEdge(&Edge{&Vertices[3], 4})
+		Vertices[3].AddEdge(&Edge{&Vertices[1], 4})
+
+		Vertices[2].AddEdge(&Edge{&Vertices[3], 5})
+		Vertices[3].AddEdge(&Edge{&Vertices[2], 5})
+
+		Vertices[3].AddEdge(&Edge{&Vertices[5], 8})
+		Vertices[5].AddEdge(&Edge{&Vertices[3], 8})
+
+		Vertices[4].AddEdge(&Edge{&Vertices[5], 1})
+		Vertices[5].AddEdge(&Edge{&Vertices[4], 1})
 	}
+
 	mst := MST()
 	//fmt.Println("MST:")
-	/*for _, e := range mst {
+	for _, e := range mst {
 		fmt.Printf("Weight: %d\n", e.Weight)
-	}*/
+	}
 
 	//fmt.Println("Len:", len(mst))
 	fmt.Println(mstToInt(mst))
