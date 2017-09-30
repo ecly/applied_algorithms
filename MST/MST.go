@@ -13,17 +13,17 @@ import (
 
 // Globals
 var Seed int32
-var VertexAmount int32
+var VertexAmount int
 var Vertices []Vertex
+var Unvisited map[int]bool
 
 // Seed: the seed of the vertex.
 // Edges: pointers to edges connected to the vertex.
-// Visited: whether is has already been visited by MST().
+// Unvisited: whether is has already been visited by MST().
 // FringeBy: -1 if no index in fringe pointing to, otherwise the index
 type Vertex struct {
 	Seed     int32
 	Edges    []*Edge
-	Visited  bool
 	FringeBy int
 }
 
@@ -35,7 +35,7 @@ func (v *Vertex) AddEdge(edge *Edge) {
 // An Edge has a pointer to the Vertex it points at
 // and a int32 Weight.
 type Edge struct {
-	To     *Vertex
+	To     int
 	Weight int32
 }
 
@@ -59,9 +59,9 @@ func (f Fringe) Less(i, j int) bool { return f[i].Edge.Weight < f[j].Edge.Weight
 func (f Fringe) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 	f[i].Index = i
-	f[i].Edge.To.FringeBy = i
+	Vertices[f[i].Edge.To].FringeBy = i
 	f[j].Index = j
-	f[j].Edge.To.FringeBy = j
+	Vertices[f[j].Edge.To].FringeBy = j
 }
 
 // Add an item to the fringe.
@@ -85,31 +85,32 @@ func (f *Fringe) Pop() interface{} {
 // Calculate a minimum spanning tree from a slice of Edges
 func MST() []*Edge {
 	mst := make([]*Edge, 0, VertexAmount-1) // minimum size
-	Vertices[0].Visited = true
-	fringe := make(Fringe, len(Vertices[0].Edges))
-
-	// initial fringe is first vertex' edges
-	for i, e := range Vertices[0].Edges {
-		item := &Item{Edge: e}
-		fringe[i] = item
-		e.To.FringeBy = i
-	}
+	fringe := make(Fringe, 0)
 	heap.Init(&fringe)
 
-	for fringe.Len() > 0 {
-		mstEdge := heap.Pop(&fringe).(*Item).Edge
-		mstEdge.To.Visited = true
-		mst = append(mst, mstEdge)
-		for _, edge := range mstEdge.To.Edges {
-			if !edge.To.Visited {
-				if edge.To.FringeBy == -1 {
-					item := &Item{Edge: edge}
-					heap.Push(&fringe, item)
-					edge.To.FringeBy = item.Index
-				} else {
-					if edge.Weight < fringe[edge.To.FringeBy].Edge.Weight {
-						fringe[edge.To.FringeBy].Edge = edge
-						heap.Fix(&fringe, edge.To.FringeBy)
+	for key := range Unvisited {
+		delete(Unvisited, key)
+		for _, e := range Vertices[key].Edges {
+			item := &Item{Edge: e}
+			heap.Push(&fringe, item)
+			Vertices[e.To].FringeBy = item.Index
+		}
+
+		for fringe.Len() > 0 {
+			mstEdge := heap.Pop(&fringe).(*Item).Edge
+			delete(Unvisited, mstEdge.To)
+			mst = append(mst, mstEdge)
+			for _, edge := range Vertices[mstEdge.To].Edges {
+				if _, ok := Unvisited[edge.To]; ok {
+					if Vertices[edge.To].FringeBy == -1 {
+						item := &Item{Edge: edge}
+						heap.Push(&fringe, item)
+						Vertices[edge.To].FringeBy = item.Index
+					} else {
+						if edge.Weight < fringe[Vertices[edge.To].FringeBy].Edge.Weight {
+							fringe[Vertices[edge.To].FringeBy].Edge = edge
+							heap.Fix(&fringe, Vertices[edge.To].FringeBy)
+						}
 					}
 				}
 			}
@@ -121,36 +122,36 @@ func MST() []*Edge {
 // Generate a fully connected graph with 'VertexAmount' vertices
 func generateComplete() {
 	// at least this big for starters
-	for i := int32(0); i < VertexAmount-1; i++ {
+	for i := 0; i < VertexAmount-1; i++ {
 		for j := i + 1; j < VertexAmount; j++ {
 			weight := getEdgeWeight(i, j)
-			Vertices[i].AddEdge(&Edge{&Vertices[j], weight})
-			Vertices[j].AddEdge(&Edge{&Vertices[i], weight})
+			Vertices[i].AddEdge(&Edge{j, weight})
+			Vertices[j].AddEdge(&Edge{i, weight})
 		}
 	}
 }
 
 // Generate a 'numX' * 'numY' graph with connected rows and comlumns
-func generateGrid(numX int32, numY int32) {
+func generateGrid(numX int, numY int) {
 	// row edges
-	for j := int32(0); j < numY; j++ {
+	for j := 0; j < numY; j++ {
 		start := j * numX
 		end := start + numX - 1
 		for i := start; i < end; i++ {
 			to := i + 1
 			weight := getEdgeWeight(i, to)
-			Vertices[i].AddEdge(&Edge{&Vertices[to], weight})
-			Vertices[to].AddEdge(&Edge{&Vertices[i], weight})
+			Vertices[i].AddEdge(&Edge{to, weight})
+			Vertices[to].AddEdge(&Edge{i, weight})
 		}
 	}
 	//column edges
-	for i := int32(0); i < numX; i++ {
-		for j := int32(0); j < numY-1; j++ {
+	for i := 0; i < numX; i++ {
+		for j := 0; j < numY-1; j++ {
 			from := i + numX*j
 			to := from + numX
 			weight := getEdgeWeight(from, to)
-			Vertices[from].AddEdge(&Edge{&Vertices[to], weight})
-			Vertices[to].AddEdge(&Edge{&Vertices[from], weight})
+			Vertices[from].AddEdge(&Edge{to, weight})
+			Vertices[to].AddEdge(&Edge{from, weight})
 		}
 	}
 }
@@ -159,7 +160,7 @@ func generateGrid(numX int32, numY int32) {
 // indicating an edge between the two vertices.
 // Vertex number should always be less than 'VertexAmount'
 // and there should be at most 'numOfEdges' edges.
-func readGraph(filename string, numOfEdges int32) []Edge {
+func readGraph(filename string, numOfEdges int) []Edge {
 	graph := make([]Edge, 0, numOfEdges) // known size
 	if file, err := os.Open(filename); err == nil {
 		// make sure it gets closed
@@ -169,13 +170,11 @@ func readGraph(filename string, numOfEdges int32) []Edge {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			words := strings.Fields(scanner.Text())
-			numY, _ := strconv.Atoi(words[0])
-			numX, _ := strconv.Atoi(words[1])
-			x := int32(numX)
-			y := int32(numY)
+			x, _ := strconv.Atoi(words[0])
+			y, _ := strconv.Atoi(words[1])
 			weight := getEdgeWeight(x, y)
-			Vertices[x].AddEdge(&Edge{&Vertices[y], weight})
-			Vertices[y].AddEdge(&Edge{&Vertices[x], weight})
+			Vertices[x].AddEdge(&Edge{y, weight})
+			Vertices[y].AddEdge(&Edge{x, weight})
 		}
 		if err = scanner.Err(); err != nil {
 			log.Fatal(err)
@@ -187,7 +186,7 @@ func readGraph(filename string, numOfEdges int32) []Edge {
 }
 
 // Calculate the weight of a vertex based on its from, to vertices.
-func getEdgeWeight(v1 int32, v2 int32) int32 {
+func getEdgeWeight(v1 int, v2 int) int32 {
 	//weight :=
 	//fmt.Printf("Edge from %d, to %d, weight: %d\n", v1, v2, weight)
 	return xorshift32(Vertices[v1].Seed^Vertices[v2].Seed) % 100000
@@ -205,9 +204,13 @@ func xorshift32(seed int32) int32 {
 // Fills 'Vertices' with Vertices with seeds generated from xorshift32.
 func generateSeeds() {
 	Vertices = make([]Vertex, VertexAmount, VertexAmount)
-	Vertices[0] = Vertex{xorshift32(Seed), nil, false, -1}
-	for i := int32(1); i < VertexAmount; i++ {
-		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, false, -1}
+	Unvisited = make(map[int]bool)
+	Vertices[0] = Vertex{xorshift32(Seed), nil, -1}
+	for i := 1; i < VertexAmount; i++ {
+		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, -1}
+	}
+	for i := 0; i < VertexAmount; i++ {
+		Unvisited[i] = false
 	}
 }
 
@@ -244,16 +247,14 @@ func main() {
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
 		vertexAmount, _ := strconv.Atoi(args[1])
-		VertexAmount = int32(vertexAmount)
+		VertexAmount = vertexAmount
 		generateSeeds()
 		generateComplete()
 	case 3:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
-		numX, _ := strconv.Atoi(args[1])
-		numY, _ := strconv.Atoi(args[2])
-		X := int32(numX)
-		Y := int32(numY)
+		X, _ := strconv.Atoi(args[1])
+		Y, _ := strconv.Atoi(args[2])
 		VertexAmount = X * Y
 		generateSeeds()
 		generateGrid(X, Y)
@@ -262,10 +263,10 @@ func main() {
 		Seed = int32(seed)
 		filename := args[1]
 		vertexAmount, _ := strconv.Atoi(args[2])
+		VertexAmount = vertexAmount
 		numOfEdges, _ := strconv.Atoi(args[3])
-		VertexAmount = int32(vertexAmount)
 		generateSeeds()
-		readGraph(filename, int32(numOfEdges))
+		readGraph(filename, numOfEdges)
 	}
 
 	mst := MST()
