@@ -104,12 +104,10 @@ func MST() []*Edge {
 
 	for fringe.Len() > 0 {
 		mstEdge := heap.Pop(&fringe).(*Item).Edge
-
 		// this check won't be needed if we fix the heap.Update()
 		if mstEdge.To.Visited {
 			continue
 		}
-
 		mstEdge.To.Visited = true
 		mst = append(mst, mstEdge)
 		for _, edge := range mstEdge.To.Edges {
@@ -120,10 +118,21 @@ func MST() []*Edge {
 					heap.Push(&fringe, item)
 				} else {
 					if edge.Weight < edge.To.FringeBy.Edge.Weight {
+						// fmt.Println("Updating")
+						fringe.update(edge.To.FringeBy, edge)
 						// this is terrible, we always push
-						item := &Item{Edge: edge}
-						edge.To.FringeBy = item
-						heap.Push(&fringe, item)
+						//item := &Item{Edge: edge}
+						//edge.To.FringeBy = item
+						//heap.Push(&fringe, item)
+						if edge.Weight < fringe[0].Edge.Weight {
+							fmt.Println("lol")
+							fringe.update(edge.To.FringeBy, edge)
+							// this is terrible, we always push
+
+							if edge.Weight < fringe[0].Edge.Weight {
+								fmt.Println("seriously lol")
+							}
+						}
 					}
 				}
 			}
@@ -135,7 +144,7 @@ func MST() []*Edge {
 // Generate a fully connected graph with 'VertexAmount' vertices
 func generateComplete() {
 	// at least this big for starters
-	for i := int32(0); i < VertexAmount; i++ {
+	for i := int32(0); i < VertexAmount-1; i++ {
 		for j := i + 1; j < VertexAmount; j++ {
 			weight := getEdgeWeight(i, j)
 			Vertices[i].AddEdge(&Edge{&Vertices[j], weight})
