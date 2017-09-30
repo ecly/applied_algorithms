@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"strings"
 )
@@ -103,9 +104,12 @@ func MST() []*Edge {
 
 	for fringe.Len() > 0 {
 		mstEdge := heap.Pop(&fringe).(*Item).Edge
+
+		// this check won't be needed if we fix the heap.Update()
 		if mstEdge.To.Visited {
 			continue
 		}
+
 		mstEdge.To.Visited = true
 		mst = append(mst, mstEdge)
 		for _, edge := range mstEdge.To.Edges {
@@ -116,6 +120,7 @@ func MST() []*Edge {
 					heap.Push(&fringe, item)
 				} else {
 					if edge.Weight < edge.To.FringeBy.Edge.Weight {
+						// this is terrible, we always push
 						item := &Item{Edge: edge}
 						edge.To.FringeBy = item
 						heap.Push(&fringe, item)
@@ -246,7 +251,7 @@ func mstToInt(mst []*Edge) int32 {
 // 4 arguments: <seed> <filename> <vertex amount> <edge amount>
 // 	Generate a graph based on file -> see 'readGraph()'
 func main() {
-	//debug.SetGCPercent(-1)
+	debug.SetGCPercent(-1)
 	args := os.Args[1:]
 	switch len(args) {
 	case 2:
@@ -303,9 +308,9 @@ func main() {
 
 	mst := MST()
 	//fmt.Println("MST:")
-	for _, e := range mst {
+	/*for _, e := range mst {
 		fmt.Printf("Weight: %d\n", e.Weight)
-	}
+	}*/
 
 	//fmt.Println("Len:", len(mst))
 	fmt.Println(mstToInt(mst))
