@@ -17,6 +17,7 @@ var Seed int32
 var VertexAmount int
 var Vertices []Vertex
 var Unvisited map[int]bool
+var mst []Edge
 
 // Seed: the seed of the vertex.
 // Edges: pointers to edges connected to the vertex.
@@ -83,8 +84,12 @@ func (f *Fringe) Pop() interface{} {
 	return item
 }
 
-// Calculate a minimum spanning tree from a slice of Edges
-func MST() []Edge {
+// Calculate a minimum spanning tree for a disconnected graph
+func MSTDisconected() []Edge {
+	Unvisited = make(map[int]bool)
+	for i := 0; i < VertexAmount; i++ {
+		Unvisited[i] = false
+	}
 	mst := make([]Edge, 0, VertexAmount-1) // minimum size
 	fringe := make(Fringe, 0)
 	heap.Init(&fringe)
@@ -112,6 +117,44 @@ func MST() []Edge {
 							fringe[Vertices[edge.To].FringeBy].Edge = edge
 							heap.Fix(&fringe, Vertices[edge.To].FringeBy)
 						}
+					}
+				}
+			}
+		}
+	}
+	return mst
+}
+
+var VisitedArray []bool
+
+// Calculate a minimum spanning tree for a connected graph
+func MSTConnected() []Edge {
+	VisitedArray = make([]bool, VertexAmount, VertexAmount)
+	mst := make([]Edge, 0, VertexAmount-1) // minimum size
+	fringe := make(Fringe, 0)
+	heap.Init(&fringe)
+
+	VisitedArray[0] = true
+	for _, edge := range Vertices[0].Edges {
+		item := &Item{Edge: edge}
+		heap.Push(&fringe, item)
+		Vertices[edge.To].FringeBy = item.Index
+	}
+
+	for fringe.Len() > 0 {
+		mstEdge := heap.Pop(&fringe).(*Item).Edge
+		VisitedArray[mstEdge.To] = true
+		mst = append(mst, mstEdge)
+		for _, edge := range Vertices[mstEdge.To].Edges {
+			if !VisitedArray[edge.To] {
+				if Vertices[edge.To].FringeBy == -1 {
+					item := &Item{Edge: edge}
+					heap.Push(&fringe, item)
+					Vertices[edge.To].FringeBy = item.Index
+				} else {
+					if edge.Weight < fringe[Vertices[edge.To].FringeBy].Edge.Weight {
+						fringe[Vertices[edge.To].FringeBy].Edge = edge
+						heap.Fix(&fringe, Vertices[edge.To].FringeBy)
 					}
 				}
 			}
@@ -228,9 +271,6 @@ func generateSeeds() {
 	for i := 1; i < VertexAmount; i++ {
 		Vertices[i] = Vertex{xorshift32(Vertices[i-1].Seed ^ Seed), nil, -1}
 	}
-	for i := 0; i < VertexAmount; i++ {
-		Unvisited[i] = false
-	}
 }
 
 // Provided hash function.
@@ -243,7 +283,7 @@ func hashRand(inIndex int32) int32 {
 }
 
 // Calculate the sum of all h(w) for all edges in MST.
-func mstToInt(mst []Edge) int32 {
+func mstToInt() int32 {
 	var total int32 = 0
 	for i := 0; i < len(mst); i++ {
 		total += hashRand(mst[i].Weight)
@@ -269,6 +309,7 @@ func main() {
 		VertexAmount = vertexAmount
 		generateSeeds()
 		generateComplete()
+		mst = MSTConnected()
 	case 3:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
@@ -277,6 +318,7 @@ func main() {
 		VertexAmount = X * Y
 		generateSeeds()
 		generateGrid(X, Y)
+		mst = MSTConnected()
 	case 4:
 		seed, _ := strconv.Atoi(args[0])
 		Seed = int32(seed)
@@ -286,8 +328,8 @@ func main() {
 		numOfEdges, _ := strconv.Atoi(args[3])
 		generateSeeds()
 		readGraph(filename, numOfEdges)
+		mst = MSTDisconected()
 	}
 
-	mst := MST()
-	fmt.Println(mstToInt(mst))
+	fmt.Println(mstToInt())
 }
