@@ -125,8 +125,10 @@ func generateComplete() {
 	for i := 0; i < VertexAmount-1; i++ {
 		for j := i + 1; j < VertexAmount; j++ {
 			weight := getEdgeWeight(i, j)
-			Vertices[i].AddEdge(&Edge{j, weight})
-			Vertices[j].AddEdge(&Edge{i, weight})
+			if weight < 0 {
+				Vertices[i].AddEdge(&Edge{j, weight})
+				Vertices[j].AddEdge(&Edge{i, weight})
+			}
 		}
 	}
 }
@@ -169,6 +171,9 @@ func readGraph(filename string, numOfEdges int) []Edge {
 		// create a new scanner and read the file line by line
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
+			if strings.HasPrefix(scanner.Text(), "#") {
+				continue
+			}
 			words := strings.Fields(scanner.Text())
 			x, _ := strconv.Atoi(words[0])
 			y, _ := strconv.Atoi(words[1])
@@ -233,12 +238,12 @@ func mstToInt(mst []*Edge) int32 {
 }
 
 // 2 arguments: <seed> <vertex amount>
-// 	Generate a fully connected graph with <vertex amount> vertices
+//  Generate a fully connected graph with <vertex amount> vertices
 // 3 arguments: <seed> <number of columns> <number of rows>
-// 	Generate a graph with connected rows and columns with dimensions
-// 	<number of columns> * <number of rows>
+//  Generate a graph with connected rows and columns with dimensions
+//  <number of columns> * <number of rows>
 // 4 arguments: <seed> <filename> <vertex amount> <edge amount>
-// 	Generate a graph based on file -> see 'readGraph()'
+//  Generate a graph based on file -> see 'readGraph()'
 func main() {
 	debug.SetGCPercent(-1)
 	args := os.Args[1:]
