@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Globals
@@ -136,11 +137,15 @@ func generateComplete() {
 	}
 }
 
-// Max weights to consider to get correct output on given tests
-var maxWeightGrid int32 = 90000
+// Utility function
+func makeTimestamp() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
+}
 
 // Generate a 'numX' * 'numY' graph with connected rows and comlumns
 func generateGrid(numX int, numY int) {
+	before := makeTimestamp()
+
 	// row edges
 	for j := 0; j < numY; j++ {
 		start := j * numX
@@ -148,10 +153,8 @@ func generateGrid(numX int, numY int) {
 		for i := start; i < end; i++ {
 			to := i + 1
 			weight := getEdgeWeight(i, to)
-			if weight < maxWeightGrid {
-				Vertices[i].AddEdge(&Edge{to, weight})
-				Vertices[to].AddEdge(&Edge{i, weight})
-			}
+			Vertices[i].AddEdge(&Edge{to, weight})
+			Vertices[to].AddEdge(&Edge{i, weight})
 		}
 	}
 	//column edges
@@ -160,22 +163,20 @@ func generateGrid(numX int, numY int) {
 			from := i + numX*j
 			to := from + numX
 			weight := getEdgeWeight(from, to)
-			if weight < maxWeightGrid {
-				Vertices[from].AddEdge(&Edge{to, weight})
-				Vertices[to].AddEdge(&Edge{from, weight})
-			}
+			Vertices[from].AddEdge(&Edge{to, weight})
+			Vertices[to].AddEdge(&Edge{from, weight})
 		}
 	}
+	after := makeTimestamp()
+	fmt.Printf("Grid generation time: %d\n", after-before)
 }
-
-// Max weights to consider to get correct output on given tests
-var maxWeightFile int32 = 50000
 
 // Read a graph from file with each lines being of format v1<tab>v2
 // indicating an edge between the two vertices.
 // Vertex number should always be less than 'VertexAmount'
 // and there should be at most 'numOfEdges' edges.
 func readGraph(filename string, numOfEdges int) []Edge {
+	before := makeTimestamp()
 	graph := make([]Edge, 0, numOfEdges) // known size
 	if file, err := os.Open(filename); err == nil {
 		// make sure it gets closed
@@ -191,10 +192,8 @@ func readGraph(filename string, numOfEdges int) []Edge {
 			x, _ := strconv.Atoi(words[0])
 			y, _ := strconv.Atoi(words[1])
 			weight := getEdgeWeight(x, y)
-			if weight < maxWeightFile {
-				Vertices[x].AddEdge(&Edge{y, weight})
-				Vertices[y].AddEdge(&Edge{x, weight})
-			}
+			Vertices[x].AddEdge(&Edge{y, weight})
+			Vertices[y].AddEdge(&Edge{x, weight})
 		}
 		if err = scanner.Err(); err != nil {
 			log.Fatal(err)
@@ -202,13 +201,13 @@ func readGraph(filename string, numOfEdges int) []Edge {
 	} else {
 		log.Fatal(err)
 	}
+	after := makeTimestamp()
+	fmt.Printf("File read time: %d\n", after-before)
 	return graph
 }
 
 // Calculate the weight of a vertex based on its from, to vertices.
 func getEdgeWeight(v1 int, v2 int) int32 {
-	//weight :=
-	//fmt.Printf("Edge from %d, to %d, weight: %d\n", v1, v2, weight)
 	return xorshift32(Vertices[v1].Seed^Vertices[v2].Seed) % 100000
 }
 
