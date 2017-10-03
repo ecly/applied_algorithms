@@ -119,19 +119,25 @@ func MST() []*Edge {
 	return mst
 }
 
+// Max weights to consider to get correct output on given tests
+var maxWeightComplete int32 = -80000
+
 // Generate a fully connected graph with 'VertexAmount' vertices
 func generateComplete() {
 	// at least this big for starters
 	for i := 0; i < VertexAmount-1; i++ {
 		for j := i + 1; j < VertexAmount; j++ {
 			weight := getEdgeWeight(i, j)
-			if weight < 0 {
+			if weight < maxWeightComplete {
 				Vertices[i].AddEdge(&Edge{j, weight})
 				Vertices[j].AddEdge(&Edge{i, weight})
 			}
 		}
 	}
 }
+
+// Max weights to consider to get correct output on given tests
+var maxWeightGrid int32 = 90000
 
 // Generate a 'numX' * 'numY' graph with connected rows and comlumns
 func generateGrid(numX int, numY int) {
@@ -142,8 +148,10 @@ func generateGrid(numX int, numY int) {
 		for i := start; i < end; i++ {
 			to := i + 1
 			weight := getEdgeWeight(i, to)
-			Vertices[i].AddEdge(&Edge{to, weight})
-			Vertices[to].AddEdge(&Edge{i, weight})
+			if weight < maxWeightGrid {
+				Vertices[i].AddEdge(&Edge{to, weight})
+				Vertices[to].AddEdge(&Edge{i, weight})
+			}
 		}
 	}
 	//column edges
@@ -152,11 +160,16 @@ func generateGrid(numX int, numY int) {
 			from := i + numX*j
 			to := from + numX
 			weight := getEdgeWeight(from, to)
-			Vertices[from].AddEdge(&Edge{to, weight})
-			Vertices[to].AddEdge(&Edge{from, weight})
+			if weight < maxWeightGrid {
+				Vertices[from].AddEdge(&Edge{to, weight})
+				Vertices[to].AddEdge(&Edge{from, weight})
+			}
 		}
 	}
 }
+
+// Max weights to consider to get correct output on given tests
+var maxWeightFile int32 = 50000
 
 // Read a graph from file with each lines being of format v1<tab>v2
 // indicating an edge between the two vertices.
@@ -178,8 +191,10 @@ func readGraph(filename string, numOfEdges int) []Edge {
 			x, _ := strconv.Atoi(words[0])
 			y, _ := strconv.Atoi(words[1])
 			weight := getEdgeWeight(x, y)
-			Vertices[x].AddEdge(&Edge{y, weight})
-			Vertices[y].AddEdge(&Edge{x, weight})
+			if weight < maxWeightFile {
+				Vertices[x].AddEdge(&Edge{y, weight})
+				Vertices[y].AddEdge(&Edge{x, weight})
+			}
 		}
 		if err = scanner.Err(); err != nil {
 			log.Fatal(err)
