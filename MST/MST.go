@@ -24,12 +24,12 @@ var Unvisited map[int]bool
 // FringeBy: -1 if no index in fringe pointing to, otherwise the index
 type Vertex struct {
 	Seed     int32
-	Edges    []*Edge
+	Edges    []Edge
 	FringeBy int
 }
 
 // Adds the pointer to Edge 'edge' to the Slice of Edges for Vertex 'v'.
-func (v *Vertex) AddEdge(edge *Edge) {
+func (v *Vertex) AddEdge(edge Edge) {
 	v.Edges = append(v.Edges, edge)
 }
 
@@ -44,7 +44,7 @@ type Edge struct {
 // and a pointer to its designated edge.
 type Item struct {
 	Index int
-	Edge  *Edge
+	Edge  Edge
 }
 
 // https://golang.org/pkg/container/heap/#example__intHeap
@@ -84,17 +84,17 @@ func (f *Fringe) Pop() interface{} {
 }
 
 // Calculate a minimum spanning tree from a slice of Edges
-func MST() []*Edge {
-	mst := make([]*Edge, 0, VertexAmount-1) // minimum size
+func MST() []Edge {
+	mst := make([]Edge, 0, VertexAmount-1) // minimum size
 	fringe := make(Fringe, 0)
 	heap.Init(&fringe)
 
 	for key := range Unvisited {
 		delete(Unvisited, key)
-		for _, e := range Vertices[key].Edges {
-			item := &Item{Edge: e}
+		for _, edge := range Vertices[key].Edges {
+			item := &Item{Edge: edge}
 			heap.Push(&fringe, item)
-			Vertices[e.To].FringeBy = item.Index
+			Vertices[edge.To].FringeBy = item.Index
 		}
 
 		for fringe.Len() > 0 {
@@ -130,8 +130,8 @@ func generateComplete() {
 		for j := i + 1; j < VertexAmount; j++ {
 			weight := getEdgeWeight(i, j)
 			if weight < maxWeightComplete {
-				Vertices[i].AddEdge(&Edge{j, weight})
-				Vertices[j].AddEdge(&Edge{i, weight})
+				Vertices[i].AddEdge(Edge{j, weight})
+				Vertices[j].AddEdge(Edge{i, weight})
 			}
 		}
 	}
@@ -144,7 +144,7 @@ func makeTimestamp() int64 {
 
 // Generate a 'numX' * 'numY' graph with connected rows and comlumns
 func generateGrid(numX int, numY int) {
-	before := makeTimestamp()
+	//before := makeTimestamp()
 
 	// row edges
 	for j := 0; j < numY; j++ {
@@ -153,8 +153,8 @@ func generateGrid(numX int, numY int) {
 		for i := start; i < end; i++ {
 			to := i + 1
 			weight := getEdgeWeight(i, to)
-			Vertices[i].AddEdge(&Edge{to, weight})
-			Vertices[to].AddEdge(&Edge{i, weight})
+			Vertices[i].AddEdge(Edge{to, weight})
+			Vertices[to].AddEdge(Edge{i, weight})
 		}
 	}
 	//column edges
@@ -163,12 +163,12 @@ func generateGrid(numX int, numY int) {
 			from := i + numX*j
 			to := from + numX
 			weight := getEdgeWeight(from, to)
-			Vertices[from].AddEdge(&Edge{to, weight})
-			Vertices[to].AddEdge(&Edge{from, weight})
+			Vertices[from].AddEdge(Edge{to, weight})
+			Vertices[to].AddEdge(Edge{from, weight})
 		}
 	}
-	after := makeTimestamp()
-	fmt.Printf("Grid generation time: %d\n", after-before)
+	//after := makeTimestamp()
+	//fmt.Printf("Grid generation time: %d\n", after-before)
 }
 
 // Read a graph from file with each lines being of format v1<tab>v2
@@ -176,7 +176,7 @@ func generateGrid(numX int, numY int) {
 // Vertex number should always be less than 'VertexAmount'
 // and there should be at most 'numOfEdges' edges.
 func readGraph(filename string, numOfEdges int) []Edge {
-	before := makeTimestamp()
+	//before := makeTimestamp()
 	graph := make([]Edge, 0, numOfEdges) // known size
 	if file, err := os.Open(filename); err == nil {
 		// make sure it gets closed
@@ -192,8 +192,8 @@ func readGraph(filename string, numOfEdges int) []Edge {
 			x, _ := strconv.Atoi(words[0])
 			y, _ := strconv.Atoi(words[1])
 			weight := getEdgeWeight(x, y)
-			Vertices[x].AddEdge(&Edge{y, weight})
-			Vertices[y].AddEdge(&Edge{x, weight})
+			Vertices[x].AddEdge(Edge{y, weight})
+			Vertices[y].AddEdge(Edge{x, weight})
 		}
 		if err = scanner.Err(); err != nil {
 			log.Fatal(err)
@@ -201,8 +201,8 @@ func readGraph(filename string, numOfEdges int) []Edge {
 	} else {
 		log.Fatal(err)
 	}
-	after := makeTimestamp()
-	fmt.Printf("File read time: %d\n", after-before)
+	//after := makeTimestamp()
+	//fmt.Printf("File read time: %d\n", after-before)
 	return graph
 }
 
@@ -243,7 +243,7 @@ func hashRand(inIndex int32) int32 {
 }
 
 // Calculate the sum of all h(w) for all edges in MST.
-func mstToInt(mst []*Edge) int32 {
+func mstToInt(mst []Edge) int32 {
 	var total int32 = 0
 	for i := 0; i < len(mst); i++ {
 		total += hashRand(mst[i].Weight)
