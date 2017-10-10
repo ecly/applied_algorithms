@@ -1,13 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strconv"
+)
 
-var N int = 3
+var MAXVAL = 1 << 8
 
 func generateMatrix(n int) []int {
 	matrix := make([]int, n*n)
 	for i := 0; i < n*n; i++ {
-		matrix[i] = i
+		matrix[i] = xorshift64(i) % MAXVAL
 	}
 	return matrix
 }
@@ -25,10 +29,48 @@ func multiplyMatrices(a []int, b []int, n int) []int {
 	return mat
 }
 
+func xorshift64(seed int) int {
+	ret := seed
+	ret ^= ret >> 12
+	ret ^= ret << 25
+	ret ^= ret >> 27
+	return ret
+}
+
+func transposMatrix(a []int, n int) []int {
+	mat := make([]int, n*n)
+	for i := 0; i < n; i++ {
+		for j := 0; j < n; j++ {
+			mat[j*n+i] = a[i*n+j]
+		}
+	}
+	return mat
+}
+
+func sumMatrix(a []int, n int) int {
+	total := 0
+	for i := 0; i < n; i++ {
+		total += a[i]
+	}
+	return total
+}
+
 func main() {
-	a := generateMatrix(N)
-	mat := multiplyMatrices(a, a, N)
-	for f := 0; f < N*N; f++ {
-		fmt.Printf("%d ", mat[f])
+	n, _ := strconv.Atoi(os.Args[1])
+	a := generateMatrix(n)
+	fmt.Println("before")
+	for f := 0; f < n*n; f++ {
+		if f%n == 0 {
+			fmt.Println()
+		}
+		fmt.Printf("%d ", a[f])
+	}
+	b := transposMatrix(a, n)
+	fmt.Println("\n\nafter")
+	for f := 0; f < n*n; f++ {
+		if f%n == 0 {
+			fmt.Println()
+		}
+		fmt.Printf("%d ", b[f])
 	}
 }
