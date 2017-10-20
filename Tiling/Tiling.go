@@ -74,23 +74,28 @@ func sumMatrix(a []int, n int) int {
 }
 
 func main() {
-	n, _ := strconv.Atoi(os.Args[1])
-	s, _ := strconv.Atoi(os.Args[2])
-	a := generateMatrix(n)
+	n_pow, _ := strconv.ParseUint(os.Args[1], 10, 64)
+	s_max_pow, _ := strconv.ParseUint(os.Args[2], 10, 64)
+    n := 1 << n_pow
 
     // time without tiling
+	a := generateMatrix(n)
 	start := time.Now()
-    b := transposeMatrix(a, n)
+    _ = transposeMatrix(a, n)
     fmt.Printf("Transpose with n=%d took %s\n", n, time.Since(start))
 
-    // time with tiling
-	start = time.Now()
-    c := transposeMatrixTiled(a, n, s)
-    fmt.Printf("Tiled transpose with n=%d and s=%d, took %s\n", n, s, time.Since(start))
+    for s := 1; s < 1 << s_max_pow; s = s << 1{
+        // time with tiling
+        start = time.Now()
+        _ = transposeMatrixTiled(a, n, s)
+        fmt.Printf("Tiled transpose with n=%d and s=%d, took %s\n", n, s, time.Since(start))
+    }
 
+    /*
     if sumMatrix(b,n) == sumMatrix(c,n){
         fmt.Print("Resulting matrices are identical.\n")
     } else {
         fmt.Print("Resulting matrices are different!\n")
     }
+    */
 }
