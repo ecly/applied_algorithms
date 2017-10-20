@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+    "time"
 )
 
 var MAXVAL = 1 << 16
@@ -76,20 +77,20 @@ func main() {
 	n, _ := strconv.Atoi(os.Args[1])
 	s, _ := strconv.Atoi(os.Args[2])
 	a := generateMatrix(n)
-	fmt.Println("before")
-	for f := 0; f < n*n; f++ {
-		if f%n == 0 {
-			fmt.Println()
-		}
-		fmt.Printf("%d ", a[f])
-	}
-	//b := transposeMatrix(a, n)
-    b := transposeMatrixTiled(a, n, s)
-	fmt.Println("\n\nafter")
-	for f := 0; f < n*n; f++ {
-		if f%n == 0 {
-			fmt.Println()
-		}
-		fmt.Printf("%d ", b[f])
-	}
+
+    // time without tiling
+	start := time.Now()
+    b := transposeMatrix(a, n)
+    fmt.Printf("Transpose with n=%d took %s\n", n, time.Since(start))
+
+    // time with tiling
+	start = time.Now()
+    c := transposeMatrixTiled(a, n, s)
+    fmt.Printf("Tiled transpose with n=%d and s=%d, took %s\n", n, s, time.Since(start))
+
+    if sumMatrix(b,n) == sumMatrix(c,n){
+        fmt.Print("Resulting matrices are identical.\n")
+    } else {
+        fmt.Print("Resulting matrices are different!\n")
+    }
 }
