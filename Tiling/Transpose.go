@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var MAXVAL = 1 << 8
+var MAXVAL = 1 << 16
 
 func generateMatrix(n int) []int {
 	matrix := make([]int, n*n)
@@ -14,6 +14,14 @@ func generateMatrix(n int) []int {
 		matrix[i] = xorshift64(i) % MAXVAL
 	}
 	return matrix
+}
+
+func xorshift64(seed int) int {
+	ret := seed
+	ret ^= ret >> 12
+	ret ^= ret << 25
+	ret ^= ret >> 27
+	return ret
 }
 
 func multiplyMatrices(a []int, b []int, n int) []int {
@@ -29,26 +37,28 @@ func multiplyMatrices(a []int, b []int, n int) []int {
 	return mat
 }
 
-func xorshift64(seed int) int {
-	ret := seed
-	ret ^= ret >> 12
-	ret ^= ret << 25
-	ret ^= ret >> 27
-	return ret
+
+func transposeMatrix(a []int, n int) []int {
+	mat := make([]int, n*n)
+    for i := 0; i < n; i ++{
+        for j := 0; j < n; j++{
+            mat[i+j*n] = a[j+i*n]
+        }
+    }
+    return mat
 }
 
-func transposMatrix(a []int, n int, s int) []int {
-	N = n * n
-	mat := make([]int, N)
-	for ii := 0; ii < N; ii++ {
-		l := i + s
-		if l > N {
-			l = N
+func transposeMatrixTiled(a []int, n int, s int) []int {
+	mat := make([]int, n*n)
+	for ii := 0; ii < n; ii++ {
+		l := ii + s
+		if l > n {
+			l = n
 		}
-		for j := 1; j < N; j++ {
-			for i = ii; 
-			mat[j*n+i] = a[i*n+j]
-
+		for j := 0; j < n; j++ {
+            for i := ii; i < l; i++{
+                mat[i+j*n] = a[j+i*n]
+            }
 		}
 	}
 	return mat
@@ -73,7 +83,8 @@ func main() {
 		}
 		fmt.Printf("%d ", a[f])
 	}
-	b := transposMatrix(a, n)
+	//b := transposeMatrix(a, n)
+    b := transposeMatrixTiled(a, n, s)
 	fmt.Println("\n\nafter")
 	for f := 0; f < n*n; f++ {
 		if f%n == 0 {
