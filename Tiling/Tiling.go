@@ -38,9 +38,12 @@ func multiplyMatrices(a []int, b []int, n int) []int {
 	return mat
 }
 
+//TODO
+/*func multiplyMatricesTiled(a []int, b []int, n int) []int {
+}*/
 
 func transposeMatrix(a []int, n int) []int {
-	mat := make([]int, n*n)
+    mat := make([]int, n*n)
     for i := 0; i < n; i ++{
         for j := 0; j < n; j++{
             mat[i+j*n] = a[j+i*n]
