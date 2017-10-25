@@ -13,6 +13,7 @@ import (
 
 // the min similarity we're looking for
 const THRESHOLD = 70
+const CUTOFF = 15
 
 // A BitVector represented as 4 uint64
 type BitVector256 struct {
@@ -27,6 +28,9 @@ type BitVector256 struct {
 func (b BitVector256) Compare(b1 BitVector256) int { 
     similarity := 0
     similarity += bits.OnesCount64(b.a & b1.a)
+    if similarity < CUTOFF {
+        return 0
+    }
     similarity += bits.OnesCount64(b.b & b1.b)
     similarity += bits.OnesCount64(b.c & b1.c)
     similarity += bits.OnesCount64(b.d & b1.d)
