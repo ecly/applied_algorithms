@@ -12,7 +12,7 @@ import (
 )
 
 // the min similarity we're looking for
-const THRESHOLD = 60
+const THRESHOLD = 70
 
 // A BitVector represented as 4 uint64
 type BitVector256 struct {
@@ -30,7 +30,7 @@ func (b BitVector256) Compare(b1 BitVector256) int {
     similarity += bits.OnesCount64(b.b & b1.b)
     similarity += bits.OnesCount64(b.c & b1.c)
     similarity += bits.OnesCount64(b.d & b1.d)
-    fmt.Printf("Similarity: %d\n", similarity)
+    //fmt.Printf("Similarity: %d\n", similarity)
     return similarity
 }
 
@@ -60,7 +60,7 @@ func readVectors(filename string, vectorAmount int) []BitVector256 {
 
 func correlatedPair(vectors []BitVector256) (int, int) {
     for i, bv := range vectors {
-        for j := i; j < len(vectors); j++ {
+        for j := i+1; j < len(vectors); j++ {
             if bv.Compare(vectors[j]) > THRESHOLD {
                 return i, j
             }
