@@ -13,6 +13,7 @@ import (
 
 // the min similarity we're looking for
 const THRESHOLD = 70
+// the cutoff for a single uint64's similarity to be considered
 const CUTOFF = 15
 
 // A BitVector represented as 4 uint64
@@ -38,6 +39,42 @@ func (b BitVector256) Compare(b1 BitVector256) int {
     return similarity
 }
 
+func correlatedPair(vectors []BitVector256) (int, int) {
+    for i, bv := range vectors {
+        for j := i+1; j < len(vectors); j++ {
+            if bv.Compare(vectors[j]) > THRESHOLD {
+                return i, j
+            }
+        }
+    }
+    return -1, -1
+}
+
+
+func compareInBuckets(buckets map[string][]BitVector256) (int,int) {
+    for _, bucket := range buckets {
+        i1, i2 := correlatedPair(bucket)
+        if i1 != -1 {
+            return i1, i2
+        }
+    }
+    return -1, -1
+}
+
+func groupInBuckets(vectors []BitVector256) map[string][]BitVector256{
+    buckets := make(map[string][]BitVector256)
+    return buckets
+}
+
+func minHash(vectors []BitVector256) (int, int){
+    buckets := groupInBuckets(vectors)
+    i1, i2 := compareInBuckets(buckets)
+    if i1 != -1 {
+        return i1, i2
+    }
+    return minHash(vectors)
+}
+
 func readVectors(filename string, vectorAmount int) []BitVector256 {
     vectors := make([]BitVector256, 0, vectorAmount)
 	if file, err := os.Open(filename); err == nil {
@@ -60,17 +97,6 @@ func readVectors(filename string, vectorAmount int) []BitVector256 {
 		log.Fatal(err)
 	}
     return vectors
-}
-
-func correlatedPair(vectors []BitVector256) (int, int) {
-    for i, bv := range vectors {
-        for j := i+1; j < len(vectors); j++ {
-            if bv.Compare(vectors[j]) > THRESHOLD {
-                return i, j
-            }
-        }
-    }
-    return -1, -1
 }
 
 func main(){
