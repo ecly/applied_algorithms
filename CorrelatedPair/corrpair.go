@@ -30,6 +30,13 @@ type BitVector256 struct {
 	d uint64
 }
 
+// A Triple used as key in a map
+type Triple struct {
+	X int
+	Y int
+	Z int
+}
+
 // Returns the similarity of two BitVectors
 // meaning the number of bits set in both Vectors
 func (b BitVector256) Compare(b1 BitVector256) int {
@@ -56,7 +63,7 @@ func correlatedPair(vectors []BitVector256) (int, int) {
 	return -1, -1
 }
 
-func compareInBuckets(buckets map[string][]BitVector256) (int, int) {
+func compareInBuckets(buckets map[Triple][]BitVector256) (int, int) {
 	for _, bucket := range buckets {
 		i1, i2 := correlatedPair(bucket)
 		if i1 != -1 {
@@ -66,23 +73,53 @@ func compareInBuckets(buckets map[string][]BitVector256) (int, int) {
 	return -1, -1
 }
 
-/*
-func findSetBit(permutation []int, vector BitVector256) int {
+func findSetBit(permutation [AMOUNT_OF_BITS]uint, vector BitVector256) int {
 	for i, v := range permutation {
-
-		if vecto
+		switch v / 4 {
+		case 0:
+			if vector.a&1<<(v%64) == 1 {
+				return i
+			}
+		case 1:
+			if vector.b&1<<(v%64) == 1 {
+				return i
+			}
+		case 2:
+			if vector.c&1<<(v%64) == 1 {
+				return i
+			}
+		case 3:
+			if vector.d&1<<(v%64) == 1 {
+				return i
+			}
+		}
 	}
+	// this should never be the case with the input sake
+	// will however happen for BitVector256 with all 0's
+	return -1
 }
-*/
 
-func groupInBuckets(vectors []BitVector256) map[string][]BitVector256 {
+func generatePermutation() [AMOUNT_OF_BITS]uint {
+	signed_perm := rand.Perm(AMOUNT_OF_BITS)
+	var permutation [AMOUNT_OF_BITS]uint
+	for i, v := range signed_perm {
+		permutation[i] = uint(v)
+	}
+	return permutation
+}
+
+func groupInBuckets(vectors []BitVector256) map[Triple][]BitVector256 {
 	rand.Seed(time.Now().UTC().UnixNano())
-	buckets := make(map[string][]BitVector256)
-	//b1 := rand.Perm(AMOUNT_OF_BITS)
-	//b2 := rand.Perm(AMOUNT_OF_BITS)
-	b3 := rand.Perm(AMOUNT_OF_BITS)
-	for _, v := range b3 {
-		fmt.Println(v)
+	buckets := make(map[Triple][]BitVector256)
+	b1 := generatePermutation()
+	b2 := generatePermutation()
+	b3 := generatePermutation()
+	for _, v := range vectors {
+		key := Triple{
+			findSetBit(b1, v),
+			findSetBit(b2, v),
+			findSetBit(b3, v)}
+		buckets[key] = append(buckets[key], v)
 	}
 
 	return buckets
@@ -129,11 +166,6 @@ func main() {
 	vectors := readVectors(filename, vectorAmount)
 
 	// returns the indices of the correlated pair within vectors
-	b3 := rand.Perm(AMOUNT_OF_BITS)
-	for _, v := range b3 {
-		fmt.Println(v)
-	}
-
 	low, high := correlatedPair(vectors)
 	fmt.Printf("%d %d\n", low, high)
 }
