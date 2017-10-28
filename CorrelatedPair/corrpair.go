@@ -22,12 +22,14 @@ const CUTOFF = 15
 // the number of bits each vector holds
 const AMOUNT_OF_BITS = 256
 
-// A BitVector represented as 4 uint64
+// A BitVector represented as 4 uint64 with an additional
+// index indicating it's index in the original slice of BitVectors.
 type BitVector256 struct {
-	a uint64
-	b uint64
-	c uint64
-	d uint64
+	a     uint64
+	b     uint64
+	c     uint64
+	d     uint64
+	index int
 }
 
 // A Triple used as key in a map
@@ -56,7 +58,7 @@ func correlatedPair(vectors []BitVector256) (int, int) {
 	for i, bv := range vectors {
 		for j := i + 1; j < len(vectors); j++ {
 			if bv.Compare(vectors[j]) > THRESHOLD {
-				return i, j
+				return bv.index, vectors[j].index
 			}
 		}
 	}
@@ -110,7 +112,7 @@ func generatePermutation() [AMOUNT_OF_BITS]uint {
 
 func groupInBuckets(vectors []BitVector256) map[Triple][]BitVector256 {
 	rand.Seed(time.Now().UTC().UnixNano())
-	buckets := make(map[Triple][]BitVector256)
+	buckets := make(map[Triple][]BitVector256, AMOUNT_OF_BITS)
 	b1 := generatePermutation()
 	b2 := generatePermutation()
 	b3 := generatePermutation()
@@ -140,13 +142,15 @@ func readVectors(filename string, vectorAmount int) []BitVector256 {
 		defer file.Close()
 
 		scanner := bufio.NewScanner(file)
+		index := 0
 		for scanner.Scan() {
 			words := strings.Fields(scanner.Text())
 			a, _ := strconv.ParseInt(words[0], 10, 64)
 			b, _ := strconv.ParseInt(words[1], 10, 64)
 			c, _ := strconv.ParseInt(words[2], 10, 64)
 			d, _ := strconv.ParseInt(words[3], 10, 64)
-			vector := BitVector256{uint64(a), uint64(b), uint64(c), uint64(d)}
+			vector := BitVector256{uint64(a), uint64(b), uint64(c), uint64(d), index}
+			index += 1
 			vectors = append(vectors, vector)
 		}
 		if scanErr := scanner.Err(); err != nil {
@@ -158,14 +162,23 @@ func readVectors(filename string, vectorAmount int) []BitVector256 {
 	return vectors
 }
 
+// Utility function
+func makeTimestamp() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
+}
+
 func main() {
 	debug.SetGCPercent(-1)
 	filename := os.Args[1]
-	// longAmount, _ := strconv.Atoi(os.Args[2])
+	//longAmount, _ := strconv.Atoi(os.Args[2])
 	vectorAmount, _ := strconv.Atoi(os.Args[3])
+
+	before := makeTimestamp()
 	vectors := readVectors(filename, vectorAmount)
+	after := makeTimestamp()
+	fmt.Printf("%d\n", after-before)
 
 	// returns the indices of the correlated pair within vectors
-	low, high := correlatedPair(vectors)
+	low, high := minHash(vectors)
 	fmt.Printf("%d %d\n", low, high)
 }
