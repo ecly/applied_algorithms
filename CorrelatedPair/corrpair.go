@@ -7,20 +7,21 @@ import (
 	"math/bits"
 	"math/rand"
 	"os"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 )
 
 // the min similarity we're looking for
-const THRESHOLD = 70
+const THRESHOLD = 65
 
 // the cutoff for a single uint64's similarity to be considered
 const CUTOFF = 15
 
 // the number of bits each vector holds
 const AMOUNT_OF_BITS = 256
+
+const AMOUNT_OF_SUBBUCKETS = 15
 
 // A BitVector represented as 4 uint64 with an additional
 // index indicating it's index in the original slice of BitVectors.
@@ -33,11 +34,7 @@ type BitVector256 struct {
 }
 
 // A Key used as key in a map
-type Key struct {
-	X int
-	Y int
-	Z int
-}
+type Key [AMOUNT_OF_SUBBUCKETS]int
 
 // Returns the similarity of two BitVectors
 // meaning the number of bits set in both Vectors
@@ -66,7 +63,7 @@ func correlatedPair(vectors []BitVector256) (int, int) {
 }
 
 func compareInBuckets(buckets map[Key][]BitVector256) (int, int) {
-	//fmt.Printf("Amount of buckets %d\n", len(buckets))
+	fmt.Printf("Amount of buckets %d\n", len(buckets))
 	for _, bucket := range buckets {
 		i1, i2 := correlatedPair(bucket)
 		if i1 != -1 {
@@ -115,14 +112,18 @@ func generatePermutation() [AMOUNT_OF_BITS]uint {
 func groupInBuckets(vectors []BitVector256) map[Key][]BitVector256 {
 	rand.Seed(time.Now().UTC().UnixNano())
 	buckets := make(map[Key][]BitVector256, AMOUNT_OF_BITS)
-	b1 := generatePermutation()
-	b2 := generatePermutation()
-	b3 := generatePermutation()
+	var permutations [AMOUNT_OF_SUBBUCKETS][AMOUNT_OF_BITS]uint
+
+	// generate all the permutations once
+	for i := 0; i < AMOUNT_OF_SUBBUCKETS; i++ {
+		permutations[i] = generatePermutation()
+	}
 	for _, v := range vectors {
-		key := Key{
-			findSetBit(b1, v),
-			findSetBit(b2, v),
-			findSetBit(b3, v)}
+		var key [AMOUNT_OF_SUBBUCKETS]int
+		// create the key as an array of size AMOUNT_OF_SUBBUCKETS
+		for j := 0; j < AMOUNT_OF_SUBBUCKETS; j++ {
+			key[j] = findSetBit(permutations[j], v)
+		}
 		//fmt.Printf("Key: %d, %d, %d\n", key.X, key.Y, key.Z)
 		buckets[key] = append(buckets[key], v)
 	}
@@ -171,7 +172,7 @@ func makeTimestamp() int64 {
 }
 
 func main() {
-	debug.SetGCPercent(-1)
+	//debug.SetGCPercent(-1)
 	filename := os.Args[1]
 	//longAmount, _ := strconv.Atoi(os.Args[2])
 	vectorAmount, _ := strconv.Atoi(os.Args[3])
