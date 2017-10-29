@@ -7,6 +7,7 @@ import (
 	"math/bits"
 	"math/rand"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -52,10 +53,10 @@ func (b BitVector256) Compare(b1 BitVector256) int {
 
 func correlatedPair(vectors []BitVector256) (int, int) {
 	//fmt.Printf("Vector of size %d\n", len(vectors))
-	for i, bv := range vectors {
+	for i := 0; i < len(vectors); i++ {
 		for j := i + 1; j < len(vectors); j++ {
-			if bv.Compare(vectors[j]) > THRESHOLD {
-				return bv.index, vectors[j].index
+			if vectors[i].Compare(vectors[j]) > THRESHOLD {
+				return vectors[i].index, vectors[j].index
 			}
 		}
 	}
@@ -63,7 +64,7 @@ func correlatedPair(vectors []BitVector256) (int, int) {
 }
 
 func compareInBuckets(buckets map[Key][]BitVector256) (int, int) {
-	fmt.Printf("Amount of buckets %d\n", len(buckets))
+	//fmt.Printf("Amount of buckets %d\n", len(buckets))
 	for _, bucket := range buckets {
 		i1, i2 := correlatedPair(bucket)
 		if i1 != -1 {
@@ -172,7 +173,7 @@ func makeTimestamp() int64 {
 }
 
 func main() {
-	//debug.SetGCPercent(-1)
+	debug.SetGCPercent(-1)
 	filename := os.Args[1]
 	//longAmount, _ := strconv.Atoi(os.Args[2])
 	vectorAmount, _ := strconv.Atoi(os.Args[3])
