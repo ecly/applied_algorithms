@@ -1,0 +1,5 @@
+real    0m0.403s
+user    0m0.419s
+sys     0m0.014s
+Amount of buckets 20161
+99998 99999

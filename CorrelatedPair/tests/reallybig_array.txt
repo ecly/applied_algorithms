@@ -1,0 +1,7 @@
+real    0m2.837s
+user    0m2.791s
+sys     0m0.068s
+
+Amount of buckets 23997
+Amount of buckets 17351
+132025 148954
