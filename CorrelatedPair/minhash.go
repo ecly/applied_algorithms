@@ -21,7 +21,7 @@ const CUTOFF = 15
 // the number of bits each vector holds
 const AMOUNT_OF_BITS = 256
 
-const AMOUNT_OF_SUBBUCKETS = 4
+const AMOUNT_OF_SUBBUCKETS = 5
 
 // the size of a single permutation
 // 64 instead of 256 as we only check first entry
@@ -60,7 +60,7 @@ func correlatedPair(vectors []BitVector256) (int, int) {
 	for i := 0; i < len(vectors); i++ {
 		vec := vectors[i]
 		for j := i + 1; j < len(vectors); j++ {
-			if vec.Compare(vectors[j]) > THRESHOLD {
+			if vec.Compare(vectors[j]) >= THRESHOLD {
 				return vec.index, vectors[j].index
 			}
 		}
