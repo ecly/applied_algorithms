@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // the min similarity we're looking for
@@ -21,6 +22,11 @@ const CUTOFF = 15
 const AMOUNT_OF_BITS = 256
 
 const AMOUNT_OF_SUBBUCKETS = 4
+
+// the size of a single permutation
+// 64 instead of 256 as we only check first entry
+// of the BitVector 256
+const PERM_SIZE = 64
 
 // A BitVector represented as 4 uint64 with an additional
 // index indicating it's index in the original slice of BitVectors.
@@ -73,27 +79,11 @@ func compareInBuckets(buckets map[Key][]BitVector256) (int, int) {
 	return -1, -1
 }
 
-func findSetBit(permutation [AMOUNT_OF_BITS]uint8, vector BitVector256) uint8 {
+func findSetBit(permutation [PERM_SIZE]uint8, vector BitVector256) uint8 {
 	for i := 0; i < AMOUNT_OF_BITS; i++ {
 		v := permutation[i]
-		//fmt.Printf("V: %d\n", v)
-		switch v / 4 {
-		case 0:
-			if vector.a&(1<<(v%64)) != 0 {
-				return v
-			}
-		case 1:
-			if vector.b&(1<<(v%64)) != 0 {
-				return v
-			}
-		case 2:
-			if vector.c&(1<<(v%64)) != 0 {
-				return v
-			}
-		case 3:
-			if vector.d&(1<<(v%64)) != 0 {
-				return v
-			}
+		if vector.a&(1<<v) != 0 {
+			return v
 		}
 	}
 	// this should never be the case with the input sake
@@ -101,17 +91,17 @@ func findSetBit(permutation [AMOUNT_OF_BITS]uint8, vector BitVector256) uint8 {
 	return 0
 }
 
-// generate the numbers 0..255 as uint8
-func defaultPermutation() [AMOUNT_OF_BITS]uint8 {
-	var arr [AMOUNT_OF_BITS]uint8
-	for i := 0; i < AMOUNT_OF_BITS; i++ {
+// generate the numbers 0..PERM_SIZE as uint8
+func defaultPermutation() [PERM_SIZE]uint8 {
+	var arr [PERM_SIZE]uint8
+	for i := 0; i < PERM_SIZE; i++ {
 		arr[i] = uint8(i)
 	}
 	return arr
 }
 
 // permutates an array similarly to how golang's libraries do it
-func generatePermutation(slice [AMOUNT_OF_BITS]uint8) [AMOUNT_OF_BITS]uint8 {
+func generatePermutation(slice [PERM_SIZE]uint8) [PERM_SIZE]uint8 {
 	for i := range slice {
 		j := rand.Intn(i + 1)
 		slice[i], slice[j] = slice[j], slice[i]
@@ -120,9 +110,9 @@ func generatePermutation(slice [AMOUNT_OF_BITS]uint8) [AMOUNT_OF_BITS]uint8 {
 }
 
 func groupInBuckets(vectors []BitVector256) map[Key][]BitVector256 {
-	//rand.Seed(time.Now().UTC().UnixNano())
-	buckets := make(map[Key][]BitVector256, AMOUNT_OF_BITS)
-	var permutations [AMOUNT_OF_SUBBUCKETS][AMOUNT_OF_BITS]uint8
+	rand.Seed(time.Now().UTC().UnixNano())
+	buckets := make(map[Key][]BitVector256)
+	var permutations [AMOUNT_OF_SUBBUCKETS][PERM_SIZE]uint8
 
 	// generate all the permutations once
 	defaultPermutation := defaultPermutation()
