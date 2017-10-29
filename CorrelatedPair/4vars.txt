@@ -1,1 +1,0 @@
-go run corrpair.go 100000vectors.txt 100000 100000 > 4vars.txt  7.30s user 0.04s system 100% cpu 7.331 total
