@@ -21,6 +21,7 @@ const CUTOFF = 15
 // the number of bits each vector holds
 const AMOUNT_OF_BITS = 256
 
+// the depth of our hashing
 const AMOUNT_OF_SUBBUCKETS = 5
 
 // the size of a single permutation
@@ -40,6 +41,7 @@ type BitVector256 struct {
 
 // A Key used as key in a map
 type Key [AMOUNT_OF_SUBBUCKETS]uint8
+type BucketMap map[Key][]BitVector256
 
 // Returns the similarity of two BitVectors
 // meaning the number of bits set in both Vectors
@@ -50,6 +52,9 @@ func (b BitVector256) Compare(b1 BitVector256) int {
 		return 0
 	}
 	similarity += bits.OnesCount64(b.b & b1.b)
+	if similarity < CUTOFF*2 {
+		return 0
+	}
 	similarity += bits.OnesCount64(b.c & b1.c)
 	similarity += bits.OnesCount64(b.d & b1.d)
 	return similarity
@@ -68,7 +73,7 @@ func correlatedPair(vectors []BitVector256) (int, int) {
 	return -1, -1
 }
 
-func compareInBuckets(buckets map[Key][]BitVector256) (int, int) {
+func compareInBuckets(buckets BucketMap) (int, int) {
 	//fmt.Printf("Amount of buckets %d\n", len(buckets))
 	for _, bucket := range buckets {
 		i1, i2 := correlatedPair(bucket)
@@ -109,9 +114,9 @@ func generatePermutation(slice [PERM_SIZE]uint8) [PERM_SIZE]uint8 {
 	return slice
 }
 
-func groupInBuckets(vectors []BitVector256) map[Key][]BitVector256 {
+func groupInBuckets(vectors []BitVector256) BucketMap {
 	rand.Seed(time.Now().UTC().UnixNano())
-	buckets := make(map[Key][]BitVector256)
+	buckets := make(BucketMap)
 	var permutations [AMOUNT_OF_SUBBUCKETS][PERM_SIZE]uint8
 
 	// generate all the permutations once
@@ -131,14 +136,19 @@ func groupInBuckets(vectors []BitVector256) map[Key][]BitVector256 {
 	return buckets
 }
 
-// recursively try until result is found
+// a single run of minhash, not guaranteed to find the pair
 func minHash(vectors []BitVector256) (int, int) {
 	buckets := groupInBuckets(vectors)
-	i1, i2 := compareInBuckets(buckets)
+	return compareInBuckets(buckets)
+}
+
+// recursively try until result is found
+func MinHash(vectors []BitVector256) (int, int) {
+	i1, i2 := minHash(vectors)
 	if i1 != -1 {
 		return i1, i2
 	}
-	return minHash(vectors)
+	return MinHash(vectors)
 }
 
 func readVectors(filename string, vectorAmount int) []BitVector256 {
@@ -174,6 +184,6 @@ func main() {
 	vectors := readVectors(filename, vectorAmount)
 
 	// returns the indices of the correlated pair within vectors
-	low, high := minHash(vectors)
+	low, high := MinHash(vectors)
 	fmt.Printf("%d %d\n", low, high)
 }
