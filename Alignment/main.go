@@ -21,7 +21,6 @@ func min(a, b int) int {
 // i being index in a, j being index in b and m being the memoizer
 // recursive hirshberg call
 func hirshberg(i int, j int, a string, b string, m [][]int) int {
-    //fmt.Println(i, j)
     if m[i][j] != -1 {
         return m[i][j]
     }
@@ -33,7 +32,7 @@ func hirshberg(i int, j int, a string, b string, m [][]int) int {
         res = i*cost
     } else {
         takeBothCost := 0
-        if a[i] != b[j] {
+        if a[i-1] != b[j-1] {
             takeBothCost = cost
         }
         res = min(takeBothCost + hirshberg(i-1, j-1, a, b, m),
@@ -51,15 +50,15 @@ func Hirshberg(a string, b string) (int, string) {
         a, b = b, a
     }
 
-    m := make([][]int, len(a))
-    for i := range a {
-        mi := make([]int, len(b))
-        for j := range b {
+    m := make([][]int, len(a)+1)
+    for i := range m {
+        mi := make([]int, len(b)+1)
+        for j := range mi {
             mi[j] = -1
         }
         m[i] = mi
     }
-    res := hirshberg(len(a)-1, len(b)-1, a, b, m)
+    res := hirshberg(len(a), len(b), a, b, m)
 
     return res, ""
 }
