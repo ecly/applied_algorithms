@@ -25,6 +25,12 @@ func hirshberg(i int, j int, a string, b string, m [][]int) int {
         return m[i][j]
     }
 
+    for ii, row := range m {
+        for jj, col := range row {
+
+        }
+    }
+
     res := -1
     if i == 0 {
         res = j*cost
