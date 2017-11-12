@@ -30,17 +30,18 @@ func rev(s string) string {
 	return string(r)
 }
 
-//reverses an intenger slice
+//returns the reverse slice of given slice s
 func revInt(s []int) []int {
-	r := []int(s)
-	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
-		r[i], r[j] = r[j], r[i]
+	size := len(s)
+	r := make([]int, size)
+	for i := 0; i < size; i++ {
+		r[i] = s[size-1-i]
 	}
 	return r
 }
 
-// returns the index of min value of x+y
-func minSumIndex(x []int, y []int) int {
+// returns the index of min value of x+y and the value
+func minSum(x []int, y []int) (int, int) {
 	minVal := inf
 	minIndex := -1
 	for i := 0; i < len(x); i++ {
@@ -50,7 +51,7 @@ func minSumIndex(x []int, y []int) int {
 			minIndex = i
 		}
 	}
-	return minIndex
+	return minIndex, minVal
 }
 
 func generateMatrix(n int, m int) [][]int {
@@ -66,49 +67,90 @@ func generateMatrix(n int, m int) [][]int {
 	return matrix
 }
 
-func trace(i int, j int, a string, b string, m [][]int, takeA string, takeB string) string {
-	//fmt.Printf("m[%d][%d] == %d - ", i, j, m[i][j])
+// A trace function favoring a, to fit CodeJudge output
+func traceBackRightLean(i int, j int, a string, b string, m [][]int, takeA string, takeB string) string {
+	//fmt.Printf("m[%d][%d] = %d\n", i, j, m[i][j])
 	if i == 0 {
-		//fmt.Printf("Taking: %s*%d\n", takeB, j)
 		return strings.Repeat(takeB, j)
 	}
 	if j == 0 {
-		// fmt.Printf("Taking: %s*%d\n", takeA, i)
 		return strings.Repeat(takeA, i)
 	}
-	if m[i][j]-m[i][j-1] == cost {
-		// fmt.Printf("Taking: %s\n", takeB)
-		prev := trace(i, j-1, a, b, m, takeA, takeB)
-		return prev + takeB
+	aCost := m[i][j] - m[i-1][j]
+	bCost := m[i][j] - m[i][j-1]
+	bothCost := m[i][j] - m[i-1][j-1]
+	if aCost <= bCost && aCost <= bothCost {
+		return traceBackRightLean(i-1, j, a, b, m, takeA, takeB) + takeA
 	}
-	if m[i][j]-m[i-1][j-1] == cost {
-		// fmt.Printf("Taking: %s\n", takeBoth)
-		prev := trace(i-1, j-1, a, b, m, takeA, takeB)
-		return prev + takeBoth
+	return traceBack(i, j, a, b, m, takeA, takeB)
+}
+
+func traceBack(i int, j int, a string, b string, m [][]int, takeA string, takeB string) string {
+	//fmt.Printf("m[%d][%d] = %d\n", i, j, m[i][j])
+	if i == 0 {
+		return strings.Repeat(takeB, j)
 	}
-	if m[i][j]-m[i-1][j] == cost {
-		// fmt.Printf("Taking: %s\n", takeA)
-		prev := trace(i-1, j, a, b, m, takeA, takeB)
-		return prev + takeA
+	if j == 0 {
+		return strings.Repeat(takeA, i)
 	}
-	if m[i][j]-m[i-1][j-1] == 0 {
-		// fmt.Printf("Taking: %s\n", takeBoth)
-		prev := trace(i-1, j-1, a, b, m, takeA, takeB)
-		return prev + takeBoth
+	aCost := m[i][j] - m[i-1][j]
+	bCost := m[i][j] - m[i][j-1]
+	bothCost := m[i][j] - m[i-1][j-1]
+	if aCost <= bCost && aCost <= bothCost {
+		return traceBack(i-1, j, a, b, m, takeA, takeB) + takeA
+	} else if bothCost <= bCost && bothCost <= aCost {
+		return traceBack(i-1, j-1, a, b, m, takeA, takeB) + takeBoth
+	} else if bCost <= bothCost && bCost <= aCost {
+		return traceBack(i, j-1, a, b, m, takeA, takeB) + takeB
 	}
-	if m[i][j]-m[i][j-1] == 0 {
-		// fmt.Printf("Taking: %s\n", takeB)
-		prev := trace(i, j-1, a, b, m, takeA, takeB)
-		return prev + takeB
+	return "NOPE"
+}
+
+// A trace function favoring a, to fit CodeJudge output
+func traceRightLean(i int, j int, a string, b string, m [][]int, takeA string, takeB string) string {
+	//fmt.Printf("m[%d][%d] = %d\n", i, j, m[i][j])
+	if i == len(a) {
+		return strings.Repeat(takeB, len(b)-j)
 	}
-	if m[i][j]-m[i-1][j] == 0 {
-		// fmt.Printf("Taking: %s\n", takeA)
-		prev := trace(i-1, j, a, b, m, takeA, takeB)
-		return prev + takeA
+	if j == len(b) {
+		return strings.Repeat(takeA, len(a)-i)
 	}
-	// fmt.Printf("Taking: %s\n", takeBoth)
-	prev := trace(i-1, j-1, a, b, m, takeA, takeB)
-	return prev + takeBoth
+
+	aCost := m[i+1][j] - m[i][j]
+	bCost := m[i][j+1] - m[i][j]
+	bothCost := m[i+1][j+1] - m[i][j]
+	if aCost <= bCost && aCost <= bothCost {
+		return takeA + traceRightLean(i+1, j, a, b, m, takeA, takeB)
+	}
+	return trace(i, j, a, b, m, takeA, takeB)
+}
+
+func trace(i int, j int, a string, b string, m [][]int, takeA string, takeB string) string {
+	//fmt.Printf("m[%d][%d] = %d\n", i, j, m[i][j])
+	if i == len(a) {
+		return strings.Repeat(takeB, len(b)-j)
+	}
+	if j == len(b) {
+		return strings.Repeat(takeA, len(a)-i)
+	}
+	aCost := m[i+1][j] - m[i][j]
+	bCost := m[i][j+1] - m[i][j]
+	bothCost := m[i+1][j+1] - m[i][j]
+	if aCost <= bCost && aCost <= bothCost {
+		return takeA + trace(i+1, j, a, b, m, takeA, takeB)
+	} else if bothCost <= bCost && bothCost <= aCost {
+		return takeBoth + trace(i+1, j+1, a, b, m, takeA, takeB)
+	} else if bCost <= bothCost && bCost <= aCost {
+		return takeB + trace(i, j+1, a, b, m, takeA, takeB)
+	}
+	return "NOPE"
+}
+
+// Trace wrapper, mostly for debugging to select correct one,
+// and limit params
+func Trace(a string, b string, m [][]int) string {
+	//return traceRightLean(0, 0, b, a, m, takeB, takeA)
+	return traceBackRightLean(len(a), len(b), b, a, m, takeB, takeA)
 }
 
 func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
@@ -117,18 +159,10 @@ func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
 	}
 	res := -1
 	if i == 0 {
-		if strings.Contains(b[:j], a[:1]) {
-			res = j*cost - 1
-		} else {
-			res = j * cost
-		}
+		res = j * cost
 		m[i][j] = res
 	} else if j == 0 {
-		if strings.Contains(a[:i], b[:1]) {
-			res = i*cost - 1
-		} else {
-			res = i * cost
-		}
+		res = i * cost
 		m[i][j] = res
 	} else {
 		takeBothCost := 0
@@ -145,16 +179,19 @@ func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
 
 // NeedlemanWunsch outer call
 func NeedlemanWunsch(a string, b string) (int, string) {
-	traceTakeA, traceTakeB := takeA, takeB
-	if len(a) > len(b) {
-		a, b = b, a
+	/*if len(a) > len(b) {
 		//fmt.Println("Swapping")
-		traceTakeA, traceTakeB = traceTakeB, traceTakeA
+		m := generateMatrix(len(b)+1, len(a)+1)
+		distance := needlemanWunsch(len(b), len(a), b, a, m)
+		//printMatrix(m)
+		output := traceRightLean(0, 0, b, a, m, takeB, takeA)
+		return distance, output
 	}
+	*/
 	m := generateMatrix(len(a)+1, len(b)+1)
 	distance := needlemanWunsch(len(a), len(b), a, b, m)
-	printMatrix(m)
-	output := trace(len(a), len(b), a, b, m, traceTakeA, traceTakeB)
+	//printMatrix(m)
+	output := traceRightLean(0, 0, a, b, m, takeA, takeB)
 	return distance, output
 }
 
@@ -163,10 +200,12 @@ func NeedlemanWunsch(a string, b string) (int, string) {
 // -- based on wiki
 // https://en.wikipedia.org/wiki/Hirschberg%27s_algorithm
 func nwScore(a string, b string) []int {
+	fmt.Printf("Comparing %s and %s\n", a, b)
 	score := generateMatrix(len(a)+1, len(b)+1)
 	needlemanWunsch(len(a), len(b), a, b, score)
+	printMatrix(score)
 	//return the last line of score matrix without the first -1
-	return score[len(a)][1:]
+	return score[len(score)-1]
 }
 
 // i being index in a, j being index in b and m being the memoizer
@@ -179,21 +218,26 @@ func hirschberg(a string, b string, takeA string, takeB string) (int, string) {
 	} else if len(b) == 0 {
 		distance = distance + cost*len(a)
 		output = output + strings.Repeat(takeA, len(a))
-	} else if len(a) == 1 || len(b) == 1 {
+	} else if len(a) == 1 {
 		distance, output = NeedlemanWunsch(a, b)
 	} else {
 		alen := len(a)
 		amid := alen / 2
 
 		scoreL := nwScore(a[:amid], b)
-		scoreR := nwScore(rev(a[amid+1:]), rev(b))
-		bmid := minSumIndex(scoreL, revInt(scoreR))
+		scoreR := nwScore(rev(a[amid:]), rev(b))
+		fmt.Printf("scoreL %v\n", scoreL)
+		fmt.Printf("scoreR %v\n", revInt(scoreR))
+		var bsplit int
+		bsplit, distance = minSum(scoreL, revInt(scoreR))
+		fmt.Println("bsplit: ", bsplit)
 
-		distanceUpper, outputUpper := hirschberg(a[:amid], b[:bmid], takeA, takeB)
-		fmt.Printf("Distance upper: %d\n", distanceUpper)
-		distanceLower, outputLower := hirschberg(b[amid+1:], b[bmid+1:], takeA, takeB)
-		fmt.Printf("Distance lower: %d\n", distanceLower)
-		distance = distanceUpper + distanceLower
+		_, outputUpper := hirschberg(a[:amid], b[:bsplit], takeA, takeB)
+		_, outputLower := hirschberg(b[amid:], b[bsplit:], takeA, takeB)
+		fmt.Printf("split1: '%s' with '%s'\n", a[:amid], b[:bsplit])
+		fmt.Printf("split2: '%s' with '%s'\n", a[amid:], b[bsplit:])
+		fmt.Printf("outputUpper: %s\n", outputUpper)
+		fmt.Printf("outputLower: %s\n", outputLower)
 		output = outputUpper + outputLower
 	}
 
@@ -212,9 +256,10 @@ func main() {
 	a := os.Args[1]
 	b := os.Args[2]
 	//distance, output := Hirschberg(a, b)
-	_, output := NeedlemanWunsch(a, b)
-	fmt.Println(output)
-	//fmt.Printf("Distance %d, Output: %s \n", distance, output)
+	//fmt.Println(distance)
+	distance, output := NeedlemanWunsch(a, b)
+	//fmt.Println(output)
+	fmt.Printf("Distance %d, Output: %s \n", distance, output)
 }
 
 func printMatrix(m [][]int) {
