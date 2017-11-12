@@ -85,14 +85,71 @@ func nwScore(a string, b string) []int {
 	return score[len(a)]
 }
 
-func needlemanWunsch(a string, b string) (int, string) {
+func trace(i int, j int, a string, b string, m [][]int) string {
+	if i == 0 {
+		return b[0:j]
+	}
+	if j == 0 {
+		return a[0:i]
+	}
+	if m[i][j]-m[i][j-1] == cost {
+		prev := trace(i, j-1, a, b, m)
+		return prev + "b"
+	}
+	if m[i][j]-m[i-1][j] == cost {
+		prev := trace(i-1, j, a, b, m)
+		return prev + "a"
+	}
+	prev := trace(i-1, j-1, a, b, m)
+	return prev + "|"
+}
+
+func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
+	if m[i][j] != -1 {
+		return m[i][j]
+	}
 	if len(a) < len(b) {
 		a, b = b, a
 	}
-	for i := i < len(b); i++ {
-
+	res := -1
+	if i == 0 {
+		res = j * cost
+	} else if j == 0 {
+		res = i * cost
+	} else {
+		takeBothCost := 0
+		if a[i-1] != b[j-1] {
+			takeBothCost = cost
+		}
+		res = min(takeBothCost+needlemanWunsch(i-1, j-1, a, b, m),
+			min(cost+needlemanWunsch(i-1, j, a, b, m),
+				cost+needlemanWunsch(i, j-1, a, b, m)))
+		m[i][j] = res
 	}
-	return 1, "|"
+	return res
+}
+
+// NeedlemanWunsch outer call
+func NeedlemanWunsch(a string, b string) (int, string) {
+	if len(a) > len(b) {
+		a, b = b, a
+	}
+
+	m := make([][]int, len(a)+1)
+	for i := range m {
+		mi := make([]int, len(b)+1)
+		for j := range mi {
+			mi[j] = -1
+		}
+		m[i] = mi
+	}
+	fmt.Printf("A: %s, B: %s\n", a, b)
+	distance := needlemanWunsch(len(a), len(b), a, b, m)
+
+	printMatrix(m)
+
+	output := trace(len(a), len(b), a, b, m)
+	return distance, output
 }
 
 // i being index in a, j being index in b and m being the memoizer
@@ -111,7 +168,7 @@ func hirschberg(a string, b string) (int, string) {
 			output = output + "a"
 		}
 	} else if len(a) == 1 || len(b) == 1 {
-		distance, output = needlemanWunsch(a, b)
+		distance, output = NeedlemanWunsch(a, b)
 	} else {
 		alen := len(a)
 		amid := alen / 2
@@ -133,6 +190,16 @@ func hirschberg(a string, b string) (int, string) {
 func main() {
 	a := os.Args[1]
 	b := os.Args[2]
-	distance, output := hirschberg(a, b)
+	//distance, output := hirschberg(a, b)
+	distance, output := NeedlemanWunsch(a, b)
 	fmt.Printf("Distance %d, Output: %s \n", distance, output)
+}
+
+func printMatrix(m [][]int) {
+	for _, mi := range m {
+		for _, val := range mi {
+			fmt.Print(val)
+		}
+		fmt.Println()
+	}
 }
