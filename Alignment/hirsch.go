@@ -7,10 +7,10 @@ import (
 )
 
 const cost = 1
-const takeA = "a"
-const takeB = "b"
 const takeBoth = "|"
 const inf = 1<<63 - 1
+const takeA = "a"
+const takeB = "b"
 
 // due to math's min being float
 func min(a, b int) int {
@@ -62,49 +62,52 @@ func generateMatrix(n int, m int) [][]int {
 		}
 		matrix[i] = mi
 	}
+	matrix[0][0] = 0
 	return matrix
 }
 
-// needleman-wunsch score two strings and return last line
-// of the generated matrix
-// -- based on wiki
-// https://en.wikipedia.org/wiki/Hirschberg%27s_algorithm
-func nwScore(a string, b string) []int {
-	score := generateMatrix(len(a)+1, len(b)+1)
-	score[0][0] = 0
-
-	needlemanWunsch(len(a), len(b), a, b, score)
-	// fmt.Printf("A: %s, B: %s\n", a, b)
-	fmt.Println("Matrix")
-	printMatrix(score)
-
-	//return the last line of score matrix
-	return score[len(a)][1:]
-}
-
-func trace(i int, j int, a string, b string, m [][]int) string {
-	if i == 1 && j == 1 {
-		return takeBoth
+func trace(i int, j int, a string, b string, m [][]int, takeA string, takeB string) string {
+	//fmt.Printf("m[%d][%d] == %d - ", i, j, m[i][j])
+	if i == 0 {
+		//fmt.Printf("Taking: %s*%d\n", takeB, j)
+		return strings.Repeat(takeB, j)
 	}
-	if i == 1 {
-		return strings.Repeat(takeA, j)
+	if j == 0 {
+		// fmt.Printf("Taking: %s*%d\n", takeA, i)
+		return strings.Repeat(takeA, i)
 	}
-	if j == 1 {
-		return strings.Repeat(takeB, i)
+	if m[i][j]-m[i][j-1] == cost {
+		// fmt.Printf("Taking: %s\n", takeB)
+		prev := trace(i, j-1, a, b, m, takeA, takeB)
+		return prev + takeB
 	}
-	if m[i][j]-m[i-1][j-1] != cost {
-		prev := trace(i-1, j-1, a, b, m)
+	if m[i][j]-m[i-1][j-1] == cost {
+		// fmt.Printf("Taking: %s\n", takeBoth)
+		prev := trace(i-1, j-1, a, b, m, takeA, takeB)
 		return prev + takeBoth
 	}
 	if m[i][j]-m[i-1][j] == cost {
-		prev := trace(i-1, j, a, b, m)
+		// fmt.Printf("Taking: %s\n", takeA)
+		prev := trace(i-1, j, a, b, m, takeA, takeB)
 		return prev + takeA
 	}
-	if m[i][j]-m[i][j-1] == cost {
-		prev := trace(i, j-1, a, b, m)
+	if m[i][j]-m[i-1][j-1] == 0 {
+		// fmt.Printf("Taking: %s\n", takeBoth)
+		prev := trace(i-1, j-1, a, b, m, takeA, takeB)
+		return prev + takeBoth
+	}
+	if m[i][j]-m[i][j-1] == 0 {
+		// fmt.Printf("Taking: %s\n", takeB)
+		prev := trace(i, j-1, a, b, m, takeA, takeB)
 		return prev + takeB
 	}
-	prev := trace(i-1, j-1, a, b, m)
+	if m[i][j]-m[i-1][j] == 0 {
+		// fmt.Printf("Taking: %s\n", takeA)
+		prev := trace(i-1, j, a, b, m, takeA, takeB)
+		return prev + takeA
+	}
+	// fmt.Printf("Taking: %s\n", takeBoth)
+	prev := trace(i-1, j-1, a, b, m, takeA, takeB)
 	return prev + takeBoth
 }
 
@@ -114,9 +117,19 @@ func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
 	}
 	res := -1
 	if i == 0 {
-		res = j * cost
+		if strings.Contains(b[:j], a[:1]) {
+			res = j*cost - 1
+		} else {
+			res = j * cost
+		}
+		m[i][j] = res
 	} else if j == 0 {
-		res = i * cost
+		if strings.Contains(a[:i], b[:1]) {
+			res = i*cost - 1
+		} else {
+			res = i * cost
+		}
+		m[i][j] = res
 	} else {
 		takeBothCost := 0
 		if a[i-1] != b[j-1] {
@@ -132,25 +145,33 @@ func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
 
 // NeedlemanWunsch outer call
 func NeedlemanWunsch(a string, b string) (int, string) {
+	traceTakeA, traceTakeB := takeA, takeB
 	if len(a) > len(b) {
 		a, b = b, a
+		//fmt.Println("Swapping")
+		traceTakeA, traceTakeB = traceTakeB, traceTakeA
 	}
-
 	m := generateMatrix(len(a)+1, len(b)+1)
-	m[0][0] = 0
-
-	// fmt.Printf("A: %s, B: %s\n", a, b)
 	distance := needlemanWunsch(len(a), len(b), a, b, m)
-
 	printMatrix(m)
-
-	output := trace(len(a), len(b), a, b, m)
+	output := trace(len(a), len(b), a, b, m, traceTakeA, traceTakeB)
 	return distance, output
 }
 
+// needleman-wunsch score two strings and return last line
+// of the generated matrix
+// -- based on wiki
+// https://en.wikipedia.org/wiki/Hirschberg%27s_algorithm
+func nwScore(a string, b string) []int {
+	score := generateMatrix(len(a)+1, len(b)+1)
+	needlemanWunsch(len(a), len(b), a, b, score)
+	//return the last line of score matrix without the first -1
+	return score[len(a)][1:]
+}
+
 // i being index in a, j being index in b and m being the memoizer
-func hirschberg(a string, b string) (int, string) {
-	distance := -1
+func hirschberg(a string, b string, takeA string, takeB string) (int, string) {
+	distance := 0
 	output := ""
 	if len(a) == 0 {
 		distance = distance + cost*len(b)
@@ -168,8 +189,10 @@ func hirschberg(a string, b string) (int, string) {
 		scoreR := nwScore(rev(a[amid+1:]), rev(b))
 		bmid := minSumIndex(scoreL, revInt(scoreR))
 
-		distanceUpper, outputUpper := hirschberg(a[:amid], b[:bmid])
-		distanceLower, outputLower := hirschberg(b[amid+1:], b[bmid+1:])
+		distanceUpper, outputUpper := hirschberg(a[:amid], b[:bmid], takeA, takeB)
+		fmt.Printf("Distance upper: %d\n", distanceUpper)
+		distanceLower, outputLower := hirschberg(b[amid+1:], b[bmid+1:], takeA, takeB)
+		fmt.Printf("Distance lower: %d\n", distanceLower)
 		distance = distanceUpper + distanceLower
 		output = outputUpper + outputLower
 	}
@@ -180,24 +203,22 @@ func hirschberg(a string, b string) (int, string) {
 // Hirschberg outer call
 func Hirschberg(a string, b string) (int, string) {
 	if len(a) > len(b) {
-		return hirschberg(b, a)
+		return hirschberg(b, a, takeB, takeA)
 	}
-	return hirschberg(a, b)
+	return hirschberg(a, b, takeA, takeB)
 }
 
 func main() {
 	a := os.Args[1]
 	b := os.Args[2]
 	//distance, output := Hirschberg(a, b)
-	distance, output := NeedlemanWunsch(a, b)
-	fmt.Printf("Distance %d, Output: %s \n", distance, output)
+	_, output := NeedlemanWunsch(a, b)
+	fmt.Println(output)
+	//fmt.Printf("Distance %d, Output: %s \n", distance, output)
 }
 
 func printMatrix(m [][]int) {
-	for _, mi := range m {
-		for _, val := range mi {
-			fmt.Print(val)
-		}
-		fmt.Println()
+	for _, mi := range m[:] {
+		fmt.Printf("%v\n", mi[:])
 	}
 }
