@@ -12,7 +12,7 @@ const inf = 1<<63 - 1
 const takeA = "a"
 const takeB = "b"
 
-// due to math's min being float
+// min of 2 ints - due to math's min being float
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -20,7 +20,8 @@ func min(a, b int) int {
 	return b
 }
 
-func rev(s string) string {
+// returns the reverse of a string
+func revString(s string) string {
 	size := len(s)
 	r := make([]byte, size)
 	for i := 0; i < size; i++ {
@@ -53,6 +54,7 @@ func minSum(x []int, y []int) (int, int) {
 	return minIndex, minVal
 }
 
+// generate an n*m matrix full of -1
 func generateMatrix(n int, m int) [][]int {
 	matrix := make([][]int, n)
 	for i := 0; i < n; i++ {
@@ -106,6 +108,8 @@ func trace(i int, j int, a string, b string, m [][]int, takeA string, takeB stri
 	return "NOPE"
 }
 
+// inner recursive call of needlemanWunsch
+// TODO - make iterative linear space instead
 func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
 	if m[i][j] != -1 {
 		return m[i][j]
@@ -134,7 +138,6 @@ func needlemanWunsch(i int, j int, a string, b string, m [][]int) int {
 func NeedlemanWunsch(a string, b string) (int, string) {
 	m := generateMatrix(len(a)+1, len(b)+1)
 	distance := needlemanWunsch(len(a), len(b), a, b, m)
-	//printMatrix(m)
 	output := trace(0, 0, a, b, m, takeA, takeB)
 	return distance, output
 }
@@ -147,8 +150,6 @@ func nwScore(a string, b string) []int {
 	//fmt.Printf("Comparing %s and %s\n", a, b)
 	score := generateMatrix(len(a)+1, len(b)+1)
 	needlemanWunsch(len(a), len(b), a, b, score)
-	//printMatrix(score)
-	//return the last line of score matrix without the first -1
 	return score[len(score)-1]
 }
 
@@ -172,20 +173,13 @@ func hirschberg(a string, b string, takeA string, takeB string) (int, string) {
 		amid := alen / 2
 
 		scoreL := nwScore(a[:amid], b)
-		scoreR := nwScore(rev(a[amid:]), rev(b))
-		//fmt.Printf("scoreL %v\n", scoreL)
-		//fmt.Printf("scoreR %v\n", revInt(scoreR))
+		scoreR := nwScore(revString(a[amid:]), revString(b))
 		var bsplit int
 		bsplit, distance = minSum(scoreL, revInt(scoreR))
-		//fmt.Println("bsplit: ", bsplit)
 
 		_, outputUpper := hirschberg(a[:amid], b[:bsplit], takeA, takeB)
 		_, outputLower := hirschberg(b[amid:], b[bsplit:], takeA, takeB)
-		//fmt.Printf("split1: '%s' with '%s'\n", a[:amid], b[:bsplit])
-		//fmt.Printf("split2: '%s' with '%s'\n", a[amid:], b[bsplit:])
-		//fmt.Printf("outputUpper: %s\n", outputUpper)
-		//fmt.Printf("outputLower: %s\n", outputLower)
-		output = outputUpper + rev(outputLower)
+		output = outputUpper + revString(outputLower)
 	}
 
 	return distance, output
@@ -209,6 +203,7 @@ func main() {
 	fmt.Printf("Distance %d, Output: %s \n", distance, output)
 }
 
+// utility function for pretty printing a matrix
 func printMatrix(m [][]int) {
 	for _, mi := range m[:] {
 		fmt.Printf("%v\n", mi[:])
