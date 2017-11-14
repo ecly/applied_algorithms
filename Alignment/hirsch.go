@@ -1,5 +1,9 @@
 package main
 
+//
+// WIP - very much unfinished and buggy as all hell
+//
+
 import (
 	"fmt"
 	"os"
