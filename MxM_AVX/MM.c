@@ -9,23 +9,17 @@
  
 typedef double myfloat;
 typedef unsigned int myindex;
- 
-// always row, colum
-// row major
-myindex rm(int i, int m, int N, int M) {return i*M + m; }
-// column major
-myindex cm(int i, int m, int N, int M) {return m*N + i; }
    
 void MxMnaive(int N, int M, int K, myfloat *A, myfloat *B, myfloat *C) {
-  // computes C += AB, C: N x M, A: N x K, B: K x M, all in row major layout
-  //int i,j,k;
-  for(int i=0; i< N; i++)
-    for(int j=0; j<M; j++)
-      for(int k=0; k<K; k++) 
-        C[rm(i,j, N,M)] += A[rm(i,k, N,K)] * B[rm(k,j, K,M)];  
+    for(int i = 0; i < N; i++){
+        for(int j = 0; j < M; j++){
+            int x = A[i*N+j];
+            for(int k = 0; k < K; k++)
+                C[k+i*N] += x * B[j*N+k];
+        }
+    }
 }
- 
- 
+
 int x = 0;
 int nextPR() {
   x =  (x+234532)*((x>> 5 )+12234);
@@ -59,9 +53,9 @@ int main(int argc, char **argv){
  
   for(i=0; i< N; i++) {
     for(j=0; j<N; j++) {
-      A[rm(i,j,N,N)] = nextPR();
-      B[rm(i,j,N,N)] = nextPR();
-      C[rm(i,j,N,N)] = 0;
+      A[i*N+j] = nextPR();
+      B[i*N+j] = nextPR();
+      C[i*N+j] = 0;
     }
   }
   MxMnaive(N,N,N, A,B,C);
