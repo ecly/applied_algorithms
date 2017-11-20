@@ -11,6 +11,7 @@ typedef double myfloat;
 typedef unsigned int myindex;
    
 void MxMnaive(int N, int M, int K, myfloat *A, myfloat *B, myfloat *C) {
+#pragma omp parallel for 
     for(int i = 0; i < N; i++){
         for(int j = 0; j < M; j++){
             int x = A[i*N+j];
@@ -35,7 +36,7 @@ int main(int argc, char **argv){
     exit(1);
   }
  
-  omp_set_num_threads(1);
+  omp_set_num_threads(4);
    
   myindex N = atoi(argv[1]);
   x = atoi(argv[2]);
