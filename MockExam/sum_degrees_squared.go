@@ -8,10 +8,8 @@ import (
 	"strings"
 )
 
-// A BitVector represented as 4 uint64 with an additional
-// index indicating it's index in the original slice of BitVectors.
-
-type graph [][]int
+// a graph tracking only degree of vertices
+type graph []int
 
 func readVertices() graph {
 	scanner := bufio.NewScanner(bufio.NewReader(os.Stdin))
@@ -19,23 +17,20 @@ func readVertices() graph {
 	words := strings.Fields(scanner.Text())
 	n, _ := strconv.Atoi(words[0])
 	graph := make(graph, n)
-	for i := range graph {
-		graph[i] = make([]int, 0)
-	}
 	for scanner.Scan() {
 		words := strings.Fields(scanner.Text())
 		x, _ := strconv.Atoi(words[0])
 		y, _ := strconv.Atoi(words[1])
-		graph[x] = append(graph[x], y)
-		graph[y] = append(graph[y], x)
+		graph[x]++
+		graph[y]++
 	}
 	return graph
 }
 
 func sumOfDegreesSquared(graph graph) int {
 	sum := 0
-	for _, edges := range graph {
-		sum += len(edges) * len(edges)
+	for _, degree := range graph {
+		sum += degree * degree
 	}
 	return sum
 }
