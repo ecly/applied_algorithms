@@ -12,28 +12,32 @@
 
 \begin{document}
   \maketitle
-  \section{Experiment}
-  For this experiment, the programming language Go will be used. The experiment will set out to compare sorting of a list of numbers with a priority queue and with a call to a library sort function. Since Go does not ship with a priority queue directly, an implementation thereof from their documentation of their heap package\footnote{\url{https://golang.org/pkg/container/heap/}} will be used. The sort function that will be used is Go's \texttt{sort.Ints}\footnote{\url{https://golang.org/pkg/sort/\#Ints}}.
+  \section{Sum of Derees Squared}
+  \subsection{Implement}
+  See attached code \texttt{sum\_degrees\_squared.go}.
 
-\textbf{Measurement:} For the comparison, the experiment will be ran 100 times for both the priority queue and for the library sort function. The input will be of size \texttt{5.000.000} and the two experiments will be ran independently on the same machine with minimal process interference.
+  The algorithm is implemented using an array of size n, which keeps track of each vertex' degree.
+  The sum is computing by squaring each degree and summing them up.
 
-\textbf{Assumption:} Due to the nature of a priority queue, it has additional housekeeping to do when we inserting and deleting items from it. Therefore we will claim that the library sorting function, will sort and return our input faster than the priority queue.
+  \subsection{Question to discuss}
+  \subsubsection{}
+  A final scan over the array is inevitable due to the nature of squaring numbers.
+  The difference between incrementing a small degree vs. \a big degree will have an impact on the output, meaning that we cannot compute any of the degrees before reading the last line.
+  \subsubsection{}\label{sec:cache_misses}
+  If we are accessing our array of degrees in linear order as we parse the input, we will have natural cache efficiency with minimal cache misses. On the other hand if we are constantly incrementing degrees of arbitrary vertices, we can end up with a total of $m*2$ cache misses.
+  \subsubsection{}
+  This phenomenon is explained by the I/O-model and the quantification is mentioned in~\ref{sec:cache_misses}
+  \subsubsection{}
+  For our problem, the most interesting factor is the size of \texttt{n}. For graphs with small n and large \texttt{m}, the majority of the time will be spent parsing the input as we will only ever have to do \texttt{n} squares in the end.
 
-\section{Results}
-\begin{figure}[!ht]
-    \centering
-    \noindent\includegraphics[scale=0.6]{graph.png}
-    \caption{Graph plotting the running times of PQ-sort and Library-sort.}
-    \label{fig:graph}
-\end{figure}
+  To compare the platforms we would therefore use a size of \texttt{n} causing the total time to be atleast 2\textasciitilde seconds to eliminate noise in the form of mostly file I/O and OS noise.
 
-Based on our results shown in Figure~\ref{fig:graph}, we can with a certainty of 95\% say that for permuting a list \texttt{A} to give a result \texttt{B} such that \texttt{B} is sorted\footnote{Sorted in this case meaning B[i] $\le$ B[i+1] for any i.}, the priority queue implementation has at most a 0.69071\% chance of being faster or equally fast as the library function.\footnote{What a bold statement. Is this even remotely close to the intended experiment?}. This is given the following:
-\[ {(1-p_{H})}^{100} \le.05 \]
-\[ p_{H}\ge 1-.05^{1/100} \]
-\[ p_{H}\ge 691/10.000 \]
+  Factors that may be impactful for our experiment include:
+  \begin{itemize}
+      \item Size of m - increases file I/O time
+      \item Size of n - increases summation time
+      \item Input ordering - impacts cache efficieny
+  \end{itemize}
 
-From Figure~\ref{fig:graph} we may also observe that the standard deviation for both the library function and for the priority queue is relatively small, while the distance between the two methodologies remain very large, indicating that the actual chance of the priority queue outperforming the library is even smaller estimated. 
-
-\section{Bonus question}
-The priority queue will never be faster at sorting an array than a sensible library function. This is due to the overhead of maintaining the advantageous data structure that most priority queues will have. However, if one was fine with keeping the data in the priority queue, and had to repeatedly insert new items into the data structure, a priority queue would vastly outperform a basic array. For the priority queue we would get insertions of $O(\log n)$ in contrast to $O(n)$ with a naive array implementation..
+  If we wanted to measure how the potentially different CPU's performed in terms of caching, we could run various graph instances on both platforms and count the cache misses as our metric. If we instead wanted measure performance in the form of time, we could run the algorithm with sufficiently large values for n and random m on both platforms measuring wall clock time as our metric. With the current implementation this would give us a good indication of single-core performance, as the algorithm is ran sequentially.
 \end{document}
