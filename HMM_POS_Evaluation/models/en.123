@@ -1,5 +1,5 @@
-%% n-grams created Sat Dec  2 18:16:44 2017 from file
-%%     handout/data/en.train
+%% n-grams created Sat Dec  2 18:44:02 2017 from file
+%%     data/en.train
 %% the corpus contained 204605 words
 %% this file contains 18 uni-, 313 bi-, and 3192 trigrams
 __$	25087

@@ -1,5 +1,5 @@
-%% lexicon created Sat Dec  2 18:16:44 2017 from file
-%%     handout/data/fr.train
+%% lexicon created Sat Dec  2 18:44:03 2017 from file
+%%     data/fr.train
 %% the corpus contained 366214 tokens
 %% this lexicon contains 42164 tokens
 %% upper/lower case is significant
