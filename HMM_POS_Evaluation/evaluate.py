@@ -1,4 +1,7 @@
-# mostly just contains Zeljko Agic's code from the Applied Algorithm course at ITU
+# Mostly just contains Zeljko Agic's code from the Applied Algorithm course at ITU
+
+import sys
+
 def load_tagged_file(filename):
     """
     Reads the part-of-speech-tagged data in "word[\t]tag[\n]" format
@@ -11,9 +14,11 @@ def load_tagged_file(filename):
         for line in file:
             line = line. strip()
             if line:
-                word, tag = line.split("\t")
-                current.append((word, tag))
-                unique_words.add(word)
+                words = line.split("\t") # 0 = word, 1 = tag
+                if (len(words) == 1):
+                    continue
+                current.append((words[0], words[1]))
+                unique_words.add(words[0])
             else:  # empty line is sentence delimiter
                 sentences.append(current)
                 current = []
