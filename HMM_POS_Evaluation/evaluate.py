@@ -15,7 +15,7 @@ def load_tagged_file(filename):
             line = line. strip()
             if line:
                 words = line.split("\t") # 0 = word, 1 = tag
-                if (len(words) == 1):
+                if (len(words) == 1): # assume irrelavant
                     continue
                 current.append((words[0], words[1]))
                 unique_words.add(words[0])
@@ -44,3 +44,20 @@ for lang, datasets in data.items():
                                         words_train, 
                                         words_test, 
                                         words_tagged))
+
+def get_accuracy(s_data, g_data):
+    """
+    Caluclates POS tagging accuracy with respect to gold data.
+    """
+    total = 0
+    correct = 0
+    for s_sent, g_sent in zip(s_data, g_data):
+        for (_, s_tag), (_, g_tag) in zip(s_sent, g_sent):
+            total += 1
+            if s_tag == g_tag:
+                correct += 1
+    print("total: {}, correct: {}".format(total, correct))
+    return correct/total
+
+accuracies = {lang:get_accuracy(data[lang][2], data[lang][3]) for lang in langs}
+print (accuracies)
