@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -13,9 +14,42 @@ type sparseEntry struct {
 	value          int
 }
 
-func readMatrix(filename string, size int) [][]sparseEntry {
-	matrix := make([][]sparseEntry, size)
-	for i := 0; i < len(matrix); i++ {
+func prettyPrintSparseMatrix(matrix [][]sparseEntry) {
+	for i, r := range matrix {
+		fmt.Print("[")
+		for _, v := range r {
+			fmt.Printf("(%d, %d = %d)", i, v.otherDimension, v.value)
+		}
+		fmt.Println("]")
+	}
+}
+
+// returns the result represented as [row][]sparseEntry.otherDimension=col
+func sparseMultiply(a [][]sparseEntry, b [][]sparseEntry, n int) [][]sparseEntry {
+	matrix := make([][]sparseEntry, n)
+	for i := 0; i < n; i++ {
+		matrix[i] = make([]sparseEntry, 0)
+	}
+
+	for k := 0; k < n; k++ {
+		for i := 0; i < len(a[k]); i++ {
+			for j := 0; j < len(b[k]); j++ {
+				fst := a[k][i]
+				snd := b[k][j]
+				row := fst.otherDimension
+				col := snd.otherDimension
+				val := fst.value * snd.value
+				matrix[row] = append(matrix[row], sparseEntry{col, val})
+			}
+		}
+	}
+	return matrix
+}
+
+// assumes square matrix of size*size
+func readMatrix(filename string, n int, rowFirst bool) [][]sparseEntry {
+	matrix := make([][]sparseEntry, n)
+	for i := 0; i < n; i++ {
 		matrix[i] = make([]sparseEntry, 0)
 	}
 	if file, err := os.Open(filename); err == nil {
@@ -25,9 +59,13 @@ func readMatrix(filename string, size int) [][]sparseEntry {
 		for scanner.Scan() {
 			words := strings.Fields(scanner.Text())
 			row, _ := strconv.Atoi(words[0])
-			column, _ := strconv.Atoi(words[1])
-			value, _ := strconv.Atoi(words[1])
-			matrix[row] = append(matrix[row], sparseEntry{column, value})
+			col, _ := strconv.Atoi(words[1])
+			val, _ := strconv.Atoi(words[2])
+			if rowFirst {
+				matrix[row] = append(matrix[row], sparseEntry{col, val})
+			} else {
+				matrix[col] = append(matrix[col], sparseEntry{row, val})
+			}
 		}
 		if scanErr := scanner.Err(); err != nil {
 			log.Fatal(scanErr)
@@ -40,7 +78,8 @@ func readMatrix(filename string, size int) [][]sparseEntry {
 
 func main() {
 	n, _ := strconv.Atoi(os.Args[1])
-	m, _ := strconv.Atoi(os.Args[2])
-	a := readMatrix(os.Args[3], n)
-	b := readMatrix(os.Args[4], m)
+	a := readMatrix(os.Args[3], n, true)
+	b := readMatrix(os.Args[5], n, false)
+	c := sparseMultiply(a, b, n)
+	prettyPrintSparseMatrix(c)
 }
