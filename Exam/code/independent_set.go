@@ -15,25 +15,6 @@ type Interval struct {
 	To   int
 }
 
-// StartSorter sorts a slice of Intervals by start time in increasing order.
-type StartSorter []Interval
-
-func (a StartSorter) Len() int           { return len(a) }
-func (a StartSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a StartSorter) Less(i, j int) bool { return a[i].From < a[j].From }
-
-// EndSorter sorts a slice of Intervals by end time in increasing order.
-// If two Intervals ends at the same time, we sort in decreasing order of
-// start time.
-type EndSorter []Interval
-
-func (a EndSorter) Len() int      { return len(a) }
-func (a EndSorter) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a EndSorter) Less(i, j int) bool {
-	// This check is needed to align with expected output
-	return a[i].To < a[j].To
-}
-
 // Utiliy function to remove an Interval from a slice of Intervals
 func remove(intervals *[]Interval, elem Interval) {
 	for i := 0; i < len(*intervals); i++ {
@@ -45,15 +26,19 @@ func remove(intervals *[]Interval, elem Interval) {
 
 // Finds the maximum independent set in a list of Intervals
 func maxIndependentSet(intervals []Interval) []Interval {
-	// Make a copy of input sorted in increasing order of Interval.To
+	// Make a copy of input and sort in increasing order of Interval.To
 	endsFirst := make([]Interval, len(intervals))
 	copy(endsFirst, intervals)
-	sort.Stable(EndSorter(endsFirst))
+	sort.SliceStable(endsFirst, func(i, j int) bool {
+		return endsFirst[i].To < endsFirst[j].To
+	})
 
-	// Make a copy of input sorted in increasing order of Interval.From
+	// Make a copy of input and sort in increasing order of Interval.From
 	startsFirst := make([]Interval, len(intervals))
 	copy(startsFirst, intervals)
-	sort.Stable(StartSorter(startsFirst))
+	sort.SliceStable(startsFirst, func(i, j int) bool {
+		return startsFirst[i].From < startsFirst[j].From
+	})
 
 	maxSet := make([]Interval, 0)
 	for len(endsFirst) > 0 {
@@ -66,7 +51,7 @@ func maxIndependentSet(intervals []Interval) []Interval {
 		for snd.From <= fst.To {
 			remove(&endsFirst, snd)
 			startsFirst = startsFirst[1:]
-			if len(startsFirst) == 0 {
+			if len(startsFirst) == 0 { // avoid index out of range
 				break
 			}
 			snd = startsFirst[0]

@@ -10,6 +10,8 @@
 \usepackage[a4paper]{geometry}
 \pagestyle{empty}
 
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+
 \lstset{frame=tb,
     frame=single,
     aboveskip=3mm,
@@ -42,15 +44,15 @@
 \newpage
 
 \section{Independent Set in Interval Graphs}
-\subsection{}
-Implementation is seen in file \texttt{independent\_set.go}.
+\subsection{Implement}
+Implementation is seen in attached file \texttt{independent\_set.go} but can also be seen in the appendix, Section~\ref{sec:indset}.
 
-\subsection{}
+\subsection{Questions to Discuss}
 \textbf{(a)} 
 The implementation has a running time of  $O(n^2)$.
 
 \textbf{(b)}
-If we only use $A_r$ and keep track of the right endpoint ($r$) of the element most recently added to the independent set.
+We only use $A_r$ and keep track of the right endpoint ($r$) of the element most recently added to the independent set.
 Now we can remove the head of $A_r$ one by one, discarding elements with left endpoints ($l$) where $l \leq r$, and adding
 elements with $l > r$. This way we only have to run through $A_r$ once, giving us $O(n)$ after sorting.
 
@@ -60,31 +62,36 @@ we have a very good chance of finding it quickly. In the example on Figure 1 fro
 find the first interval [-2, -1] as the second element when we try to remove it from the list sorted by interval start.
 
 \textbf{(d)}
-We use $l_2 \leq r$ for the inner loop since we want to discard all intervals that start before the end of the interval
-that we have just added to the independent set.
+We use $l_2 \leq r$ for the inner loop since we want to discard all intervals that start before or at the same time of the end of the interval
+that we just added to the independent set.
 
 \textbf{(e)}
 If $A_r$ and $A_l$ were priority queues, other than the regular insert and pull, we would need a \texttt{remove(elem)} method to remove
 a specific element somewhere in the queue.
 
-\begin{lstlisting}
-package main
+\section{Summing Triples of Integers}
+\subsection{Implement}
+Implementation is seen in attached file \texttt{triples.go} but can also be seen in the appendix, Section~\ref{sec:triples}.
 
-import "fmt"
+\subsection{Questions to Discuss}
+\textbf{(a)}
+Each buckets is represented as a slice\footnote{https://blog.golang.org/go-slices-usage-and-internals} of integers, which is convenient as slices
+are dynamically-sized and we hash an arbitrary number of elements to each bucket. To store all the buckets we also use a slice,
+which in this case is convenient as slices have constant time random access due to their underlying arrays. The only inconvenience a slice may impose
+is that we can only have \texttt{Integer} keys, but since our \texttt{hash} returns an \texttt{Integer}, this is ideal.
 
-func main() {
-    fmt.Println("Hello World!")
-}
-\end{lstlisting}
+\textbf{(b)}
+If we were to make the constant $16$ into a $1$, we would have an average bucket size of $1$, in which case we will have to compare a lot of buckets all of which will have very few elements and generally bad cache efficiency. On the other hand, if our constant becomes too large, we end up in the worst case with a single bucket, causing us to naively try all combinations within that bucket. Since we have no interest in neither of these properties, we instead look for a moderate number of buckets which affects the average size of each bucket, and reduces the total number of comparisons of $a+b==c$.
+The high-level concept that may benefit from this is the I/O model and thereby cache efficiency. We want the average size of each bucket to be of a size
+that leads to our \texttt{naiveCompare} method having a natural cache efficiency, meaning a minimal number of cache misses.
+This means the we are looking to balance the ratio between bucket size and the total number of buckets, to use our cache efficiently while minimizing the total number of comparisons needed.
 
-% \begin{figure}[!ht]
-%     \centering
-%     \noindent\includegraphics[scale=0.5]{res/}
-%     \caption{}
-%     \label{fig:}
-% \end{figure}
+If we ported this to a new machine, it will probably have a different CPU and that CPU may have different cache size causing a different bucket size to be optimal
+in terms of minimizing cache misses during our naive comparison.
 
 \section{Appendix}
-%\subsection{SecComSys.java}\label{sec:akka}
-%\lstinputlisting{../src/Erlang/SecComSys.java}
+\subsection{independent\_set.go}\label{sec:indset}
+\lstinputlisting{../code/independent_set.go}
+\subsection{triples.go}\label{sec:triples}
+\lstinputlisting{../code/triples.go}
 \end{document}
