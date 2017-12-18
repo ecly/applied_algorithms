@@ -48,12 +48,12 @@ func maxIndependentSet(intervals []Interval) []Interval {
 	// Make a copy of input sorted in increasing order of Interval.To
 	endsFirst := make([]Interval, len(intervals))
 	copy(endsFirst, intervals)
-	sort.Sort(EndSorter(endsFirst))
+	sort.Stable(EndSorter(endsFirst))
 
 	// Make a copy of input sorted in increasing order of Interval.From
 	startsFirst := make([]Interval, len(intervals))
 	copy(startsFirst, intervals)
-	sort.Sort(StartSorter(startsFirst))
+	sort.Stable(StartSorter(startsFirst))
 
 	maxSet := make([]Interval, 0)
 	for len(endsFirst) > 0 {

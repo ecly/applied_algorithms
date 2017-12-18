@@ -41,8 +41,31 @@
 \tableofcontents
 \newpage
 
-\section{Question 1}
+\section{Independent Set in Interval Graphs}
 \subsection{}
+Implementation is seen in file \texttt{independent\_set.go}.
+
+\subsection{}
+\textbf{(a)} 
+The implementation has a running time of  $O(n^2)$.
+
+\textbf{(b)}
+If we only use $A_r$ and keep track of the right endpoint ($r$) of the element most recently added to the independent set.
+Now we can remove the head of $A_r$ one by one, discarding elements with left endpoints ($l$) where $l \leq r$, and adding
+elements with $l > r$. This way we only have to run through $A_r$ once, giving us $O(n)$ after sorting.
+
+\textbf{(c)}
+Since both lists are sorted in increasing order, albeit on different properties, by searching from the start of the list
+we have a very good chance of finding it quickly. In the example on Figure 1 from the assignment, we will for example
+find the first interval [-2, -1] as the second element when we try to remove it from the list sorted by interval start.
+
+\textbf{(d)}
+We use $l_2 \leq r$ for the inner loop since we want to discard all intervals that start before the end of the interval
+that we have just added to the independent set.
+
+\textbf{(e)}
+If $A_r$ and $A_l$ were priority queues, other than the regular insert and pull, we would need a \texttt{remove(elem)} method to remove
+a specific element somewhere in the queue.
 
 \begin{lstlisting}
 package main
